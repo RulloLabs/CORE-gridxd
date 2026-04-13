@@ -1,16 +1,17 @@
 # 📝 GRIDXD: Tareas y Mejoras Pendientes (2026)
 
-## 🛠️ Prioridad Alta (Q2 2026) - [COMPLETADOS]
-- [x] **Vectorización (PNG to SVG):** Integrado mediante `imagetracerjs` para ofrecer descarga vectorial.
-- [x] **Soporte de Alta Resolución (2K):** Implementado escalado a 2048px por defecto.
-- [x] **Configuración VITE_GRIDXD_API_URL:** Backend desplegado en Railway, URL configurada en Vercel.
-- [x] **Landing Page - Social Proof:** Sección de testimonios y casos de uso añadida.
-- [x] **Modo "Diseño":** Toggle de fondo del canvas (Cuadrícula / Blanco / Negro / Transparente).
-- [x] **Optimización de imágenes:** Compresión DEFLATE + escala 1024px opcional antes de generar el ZIP.
-- [x] **Editor Web Integrado:** UI para que el usuario pueda borrar cuadros de detección erróneos o añadir nuevos manualmente.
-- [x] **Historial de usuario:** Tabla en Supabase `processing_history` para guardar logs de archivos procesados y previsualizaciones.
-- [x] **Ajuste Óptico Dinámico:** IA que sugiera el centrado óptico de los iconos detectados.
-- [x] **Ecosistema**: API Documentation, Figma Plugin (Prototipo), CLI Tool (Prototipo).
+## 🚀 LANZAMIENTO INMEDIATO Y MONETIZACIÓN (HOY)
+- [x] **App Pública (Vercel):** Frontend desplegado y linkeado.
+- [x] **Backend (Railway):** API alojada en infraestructura escalable.
+- [x] **Stripe Listo:** Configuración de checkout preparada para "medir si alguien paga".
+- [x] **Figma Plugin (V1 MVP):** Empujando la UI para subir imágenes directo desde Figma.
+
+## 📈 MARKETING (MAÑANA/ESTA SEMANA)
+*FRASE CLAVE: "No necesitas más features. Necesitas usuarios."*
+- [ ] Lanzar demo en TikTok.
+- [ ] Postear en subreddits de diseño (Figma / UI).
+- [ ] Postear en X (Twitter).
+- [ ] Medir conversión de pagos.
 
 ---
 

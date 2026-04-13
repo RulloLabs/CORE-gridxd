@@ -30,8 +30,39 @@ figma.ui.onmessage = async (msg) => {
   }
 
   if (msg.type === 'extraction-success') {
-    figma.notify(`✅ ¡${msg.count} iconos extraídos con éxito vía GridXD!`);
-    // En el futuro: importar SVG/PNG de vuelta al lienzo
+    figma.notify(`✅ ¡${msg.images.length} iconos generados por GridXD!`);
+    
+    const nodes: SceneNode[] = [];
+    let xOffset = 0;
+    
+    for (let i = 0; i < msg.images.length; i++) {
+      const base64Data = msg.images[i].replace(/^data:image\/\w+;base64,/, "");
+      // Convertir base64 a Uint8Array
+      const binary = atob(base64Data);
+      const bytes = new Uint8Array(binary.length);
+      for (let j = 0; j < binary.length; j++) {
+        bytes[j] = binary.charCodeAt(j);
+      }
+      
+      const image = figma.createImage(bytes);
+      const rect = figma.createRectangle();
+      
+      // Tamaño estándar de bloque para iconos es 64x64
+      rect.resize(64, 64);
+      rect.x = figma.viewport.center.x + xOffset;
+      rect.y = figma.viewport.center.y;
+      rect.fills = [{ type: 'IMAGE', imageHash: image.hash, scaleMode: 'FIT' }];
+      rect.name = `gridxd-icon-${i+1}`;
+      
+      figma.currentPage.appendChild(rect);
+      nodes.push(rect);
+      
+      xOffset += 80; // Espaciado entre iconos generados
+    }
+    
+    // Seleccionar y hacer zoom en los iconos recién creados
+    figma.currentPage.selection = nodes;
+    figma.viewport.scrollAndZoomIntoView(nodes);
   }
 
   if (msg.type === 'extraction-fail') {
