@@ -73,7 +73,7 @@ const HistorySection = () => {
                   <p className="text-xs text-muted-foreground mt-1">
                     Ejecuta la migración SQL en{" "}
                     <a
-                      href="https://supabase.com/dashboard/project/oljivwoydprggxvnxklj/sql/new"
+                      href="https://supabase.com/dashboard/project/ptwtioobecgrmlwqwbpf/sql/new"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary underline"
