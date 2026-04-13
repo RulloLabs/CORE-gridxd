@@ -49,6 +49,7 @@ const UploadSection = () => {
   const [showUpsell, setShowUpsell] = useState(false);
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('grid');
   const [compressZip, setCompressZip] = useState(false);
+  const [activeMode, setActiveMode] = useState<"extract" | "generate">("extract");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-rename when project name changes
@@ -129,13 +130,65 @@ const UploadSection = () => {
     <section id="upload" className="py-24 px-4">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          Pruébalo ahora
+          Crea tu Design System
         </h2>
         <p className="text-muted-foreground text-center mb-8 max-w-lg mx-auto">
-          Sube una imagen con iconos y obtén cada uno separado al instante con procesamiento en Railway.
+          Extrae iconos listos para producción desde mockups o genera un pack completo desde cero basándote en tu logo.
         </p>
 
-        {/* SETTINGS PANEL */}
+        {/* MODO SELECTOR UI */}
+        <div className="flex justify-center mb-10">
+          <div className="bg-muted/50 p-1 rounded-xl flex items-center gap-1 border border-border">
+            <button
+              onClick={() => setActiveMode("extract")}
+              className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                activeMode === "extract"
+                  ? "bg-card text-foreground shadow-sm border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              ✂️ Modo Extraer
+            </button>
+            <button
+              onClick={() => setActiveMode("generate")}
+              className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                activeMode === "generate"
+                  ? "bg-primary text-primary-foreground shadow-sm glow-cyan"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              ✨ Modo Crear Sistema
+            </button>
+          </div>
+        </div>
+
+        {activeMode === "generate" ? (
+          <div className="bg-card border border-primary/20 rounded-2xl p-10 text-center shadow-lg relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                Generador de Sistema de Iconos
+              </h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-8">
+                Sube tu logotipo y nuestra IA extraerá el "ADN Visual". Generaremos automáticamente los 24 iconos clave que toda app necesita (Navegación, Usuario, Sistema, etc.) usando el estilo exacto de tu marca.
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto mb-8 text-left opacity-70">
+                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-home.svg</div>
+                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-user.svg</div>
+                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-settings.svg</div>
+                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-search.svg</div>
+              </div>
+
+              <div className="inline-block bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+                Próximamente en Q3 2026
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* SETTINGS PANEL */}
         <div className="mb-4 flex items-center justify-end gap-2 px-2">
           <div className="flex items-center gap-1.5 mr-auto">
             <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">2K UHD</span>
@@ -439,6 +492,8 @@ const UploadSection = () => {
               </p>
             )}
           </div>
+        )}
+        </>
         )}
 
         {error && (
