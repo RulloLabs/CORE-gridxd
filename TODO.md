@@ -16,6 +16,6 @@
 - [x] **Ajuste Óptico Dinámico:** IA que sugiera el centrado óptico de los iconos detectados.
 
 ## 🔗 Ecosistema
-- [ ] API Documentation (Swagger/OpenAPI) — FastAPI lo genera automáticamente en `/docs`.
-- [ ] Prototipo de Plugin para Figma.
-- [ ] CLI Tool para procesar carpetas locales.
+- [x] API Documentation (Swagger/OpenAPI) — FastAPI lo genera automáticamente en `/docs`.
+- [x] Prototipo de Plugin para Figma.
+- [x] CLI Tool para procesar carpetas locales.

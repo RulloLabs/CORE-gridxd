@@ -1,0 +1,16 @@
+{
+  "name": "gridxd-plugin",
+  "id": "1234567890",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "defaultRunAction": "Mostrar ventana de plugin",
+  "permissions": [
+    "currentuser"
+  ],
+  "networkAccess": {
+    "allowedDomains": ["https://gridxd-main-production.up.railway.app"]
+  }
+}
