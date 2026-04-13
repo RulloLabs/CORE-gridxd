@@ -9,11 +9,11 @@
 - [x] **Optimización de imágenes:** Compresión DEFLATE + escala 1024px opcional antes de generar el ZIP.
 
 ## 🚀 Mejoras de Producto
-- [ ] **Editor Web Integrado:** UI para que el usuario pueda borrar cuadros de detección erróneos o añadir nuevos manualmente.
-- [ ] **Historial de usuario:** Tabla en Supabase `processing_history` para guardar logs de archivos procesados y previsualizaciones.
+- [x] **Editor Web Integrado:** UI para que el usuario pueda borrar cuadros de detección erróneos o añadir nuevos manualmente.
+- [x] **Historial de usuario:** Tabla en Supabase `processing_history` para guardar logs de archivos procesados y previsualizaciones.
 
 ## 🎨 Diseño y UX
-- [ ] **Ajuste Óptico Dinámico:** IA que sugiera el centrado óptico de los iconos detectados.
+- [x] **Ajuste Óptico Dinámico:** IA que sugiera el centrado óptico de los iconos detectados.
 
 ## 🔗 Ecosistema
 - [ ] API Documentation (Swagger/OpenAPI) — FastAPI lo genera automáticamente en `/docs`.

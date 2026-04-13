@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Check, Trash2, Plus, RotateCcw, MousePointer } from "lucide-react";
+import { Check, Trash2, RotateCcw, MousePointer, Sparkles } from "lucide-react";
 import type { Region } from "@/hooks/useImageProcessor";
 
 interface IconEditorProps {
@@ -23,6 +23,7 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
   const containerRef = useRef<HTMLDivElement>(null);
   const [imgSize, setImgSize] = useState({ w: imgEl.naturalWidth, h: imgEl.naturalHeight });
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
+  const [isRefining, setIsRefining] = useState(false);
 
   // Measure the displayed image dimensions
   useEffect(() => {
@@ -65,8 +66,75 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
     };
   };
 
+  const refineOpticalAdjustment = useCallback(() => {
+    setIsRefining(true);
+    
+    setTimeout(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+      ctx.drawImage(imgEl, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      const refined = regions.map((r) => {
+        let minX = r.maxX, minY = r.maxY, maxX = r.minX, maxY = r.minY;
+        let found = false;
+
+        // Iterate within the current region to find actual non-empty pixels
+        for (let y = Math.floor(Math.max(0, r.minY)); y < Math.ceil(Math.min(canvas.height, r.maxY)); y++) {
+          for (let x = Math.floor(Math.max(0, r.minX)); x < Math.ceil(Math.min(canvas.width, r.maxX)); x++) {
+            const idx = (y * canvas.width + x) * 4;
+            const aVal = data[idx + 3];
+            const rVal = data[idx];
+            const gVal = data[idx + 1];
+            const bVal = data[idx + 2];
+            
+            // Brightness check for background (white/light or dark/black)
+            const brightness = (rVal + gVal + bVal) / 3;
+            const isTarget = aVal > 30 && (brightness < 235 && brightness > 20);
+
+            if (isTarget) {
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+              found = true;
+            }
+          }
+        }
+
+        if (!found) return r;
+
+        // Content size
+        const contentW = maxX - minX;
+        const contentH = maxY - minY;
+
+        // Maintain some squareness/aspect ratio and padding
+        const size = Math.max(contentW, contentH);
+        const padding = size * 0.15;
+        const targetW = contentW + padding * 2;
+        const targetH = contentH + padding * 2;
+        
+        const centerX = minX + contentW / 2;
+        const centerY = minY + contentH / 2;
+
+        return {
+          ...r,
+          minX: Math.max(0, Math.round(centerX - targetW / 2)),
+          minY: Math.max(0, Math.round(centerY - targetH / 2)),
+          maxX: Math.min(canvas.width, Math.round(centerX + targetW / 2)),
+          maxY: Math.min(canvas.height, Math.round(centerY + targetH / 2)),
+        };
+      });
+
+      setRegions(refined);
+      setIsRefining(false);
+    }, 50);
+  }, [regions, imgEl]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only start drawing on the container itself (not on a region button)
     if ((e.target as HTMLElement).closest('[data-region-btn]')) return;
     const { x, y } = getEventPos(e);
     setDrawing({ startX: x, startY: y });
@@ -88,8 +156,7 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
     if (!drawing || !draft) return;
     setDrawing(null);
 
-    // Ignore tiny accidental clicks
-    if (draft.w < 15 || draft.h < 15) {
+    if (draft.w < 10 || draft.h < 10) {
       setDraft(null);
       return;
     }
@@ -134,6 +201,14 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={refineOpticalAdjustment}
+            disabled={regions.length === 0 || isRefining}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20 disabled:opacity-30"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${isRefining ? 'animate-spin' : ''}`} />
+            {isRefining ? "Ajustando..." : "Ajuste Óptico"}
+          </button>
+          <button
             onClick={() => setRegions([])}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-400 hover:bg-red-400/10 transition-colors"
           >
@@ -170,7 +245,7 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         <span>
           <strong className="text-foreground/70">Arrastra</strong> para añadir región ·{" "}
           <strong className="text-foreground/70">×</strong> para eliminar ·{" "}
-          <strong className="text-foreground/70">{regions.length} iconos</strong> se exportarán
+          <strong className="text-foreground/70">Ajuste Óptico</strong> para centrar iconos automáticamente
         </span>
       </div>
 
@@ -184,7 +259,6 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         onMouseUp={handleMouseUp}
         onMouseLeave={() => { if (drawing) { setDrawing(null); setDraft(null); } }}
       >
-        {/* Image */}
         <img
           src={imgEl.src}
           alt="Imagen fuente"
@@ -193,13 +267,11 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
           style={{ maxHeight: "60vh", objectFit: "contain" }}
         />
 
-        {/* SVG Overlay */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           viewBox={`0 0 ${displaySize.w} ${displaySize.h}`}
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Detected regions */}
           {regions.map((r) => {
             const tl = toDisplay(r.minX, r.minY);
             const br = toDisplay(r.maxX, r.maxY);
@@ -209,7 +281,6 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
 
             return (
               <g key={r.id}>
-                {/* Fill */}
                 <rect
                   x={tl.x}
                   y={tl.y}
@@ -222,30 +293,14 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
                   rx={4}
                   className="transition-all duration-150"
                 />
-                {/* Label */}
-                <rect
-                  x={tl.x}
-                  y={tl.y - 18}
-                  width={Math.min(w, 60)}
-                  height={16}
-                  fill="hsl(var(--primary))"
-                  rx={3}
-                />
-                <text
-                  x={tl.x + 4}
-                  y={tl.y - 6}
-                  fill="white"
-                  fontSize={9}
-                  fontWeight="bold"
-                  fontFamily="monospace"
-                >
+                <rect x={tl.x} y={tl.y - 18} width={Math.min(w, 60)} height={16} fill="hsl(var(--primary))" rx={3} />
+                <text x={tl.x + 4} y={tl.y - 6} fill="white" fontSize={9} fontWeight="bold">
                   #{regions.indexOf(r) + 1}
                 </text>
               </g>
             );
           })}
 
-          {/* Draft rectangle while drawing */}
           {draft && draft.w > 4 && draft.h > 4 && (
             <rect
               x={draft.x}
@@ -261,7 +316,6 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
           )}
         </svg>
 
-        {/* Interactive delete buttons (above SVG, pointer-events enabled) */}
         {regions.map((r) => {
           const tl = toDisplay(r.minX, r.minY);
           const br = toDisplay(r.maxX, r.maxY);
@@ -275,13 +329,8 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
               onMouseEnter={() => setHoveredId(r.id)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={(e) => { e.stopPropagation(); deleteRegion(r.id); }}
-              className="absolute w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:scale-110 cursor-pointer z-20"
-              style={{
-                left: `${btnX}px`,
-                top: `${btnY}px`,
-                transform: "translate(-50%, -50%)",
-              }}
-              title="Eliminar región"
+              className="absolute w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center hover:bg-red-600 transition-all shadow-lg z-20"
+              style={{ left: `${btnX}px`, top: `${btnY}px`, transform: "translate(-50%, -50%)" }}
             >
               ×
             </button>
@@ -289,15 +338,10 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         })}
       </div>
 
-      {/* ── Footer stats ── */}
       <div className="px-4 py-2 bg-black/50 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>
-          Imagen: {imgSize.w}×{imgSize.h}px
-        </span>
+        <span>Imagen: {imgSize.w}×{imgSize.h}px</span>
         <span className="text-primary font-semibold">
-          {regions.length === 0
-            ? "Sin regiones — arrastra para añadir"
-            : `${regions.length} icono${regions.length !== 1 ? "s" : ""} listo${regions.length !== 1 ? "s" : ""} para exportar`}
+          {regions.length} iconos listos para exportar
         </span>
       </div>
     </div>
