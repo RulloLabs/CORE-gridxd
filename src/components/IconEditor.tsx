@@ -9,7 +9,10 @@ interface IconEditorProps {
   onCancel: () => void;
 }
 
-type DrawState = { startX: number; startY: number } | null;
+type DragAction = 
+  | { type: 'draw'; startX: number; startY: number }
+  | { type: 'move'; id: string;  startX: number; startY: number; origMinX: number; origMinY: number; origMaxX: number; origMaxY: number }
+  | { type: 'resize-br'; id: string; origMaxX: number; origMaxY: number };
 
 function generateId() {
   return `region-${Math.random().toString(36).slice(2)}-${Date.now()}`;
@@ -17,7 +20,7 @@ function generateId() {
 
 const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorProps) => {
   const [regions, setRegions] = useState<Region[]>(initialRegions);
-  const [drawing, setDrawing] = useState<DrawState>(null);
+  const [action, setAction] = useState<DragAction | null>(null);
   const [draft, setDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,7 +96,8 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
             
             // Brightness check for background (white/light or dark/black)
             const brightness = (rVal + gVal + bVal) / 3;
-            const isTarget = aVal > 30 && (brightness < 235 && brightness > 20);
+            // Un píxel se considera objetivo si no es totalmente opaco blanco/negro del fondo
+            const isTarget = aVal > 30 && (brightness < 240 && brightness > 15);
 
             if (isTarget) {
               if (x < minX) minX = x;
@@ -110,6 +114,8 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         // Content size
         const contentW = maxX - minX;
         const contentH = maxY - minY;
+
+        if (contentW <= 0 || contentH <= 0) return r;
 
         // Maintain some squareness/aspect ratio and padding
         const size = Math.max(contentW, contentH);
@@ -129,57 +135,134 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         };
       });
 
-      setRegions(refined);
+      // Filter out invalid regions (0 width/height) to prevent extraction errors
+      const validRefined = refined.filter(r => r.maxX - r.minX > 5 && r.maxY - r.minY > 5);
+      
+      setRegions(validRefined);
       setIsRefining(false);
     }, 50);
   }, [regions, imgEl]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Si dimos click en un botón HTML (borrar todo, confirmar, etc) saltamos
     if ((e.target as HTMLElement).closest('[data-region-btn]')) return;
+    
+    // Si dimos click en algún overlay de svg que tenga accion
+    const target = e.target as SVGElement;
+    const actionType = target.getAttribute("data-action");
+    const regionId = target.getAttribute("data-id");
+
     const { x, y } = getEventPos(e);
-    setDrawing({ startX: x, startY: y });
+
+    if (actionType === "move" && regionId) {
+      const region = regions.find(r => r.id === regionId);
+      if (region) {
+        setAction({ type: "move", id: regionId, startX: x, startY: y, origMinX: region.minX, origMinY: region.minY, origMaxX: region.maxX, origMaxY: region.maxY });
+      }
+      return;
+    }
+
+    if (actionType === "resize-br" && regionId) {
+      const region = regions.find(r => r.id === regionId);
+      if (region) {
+        setAction({ type: "resize-br", id: regionId, origMaxX: region.maxX, origMaxY: region.maxY });
+      }
+      return;
+    }
+
+    // Default: Empieza a dibujar uno nuevo
+    setAction({ type: 'draw', startX: x, startY: y });
     setDraft({ x, y, w: 0, h: 0 });
     e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!drawing) return;
+    if (!action) return;
     const { x, y } = getEventPos(e);
-    const minX = Math.min(drawing.startX, x);
-    const minY = Math.min(drawing.startY, y);
-    const w = Math.abs(x - drawing.startX);
-    const h = Math.abs(y - drawing.startY);
-    setDraft({ x: minX, y: minY, w, h });
+
+    if (action.type === "draw") {
+      const minX = Math.min(action.startX, x);
+      const minY = Math.min(action.startY, y);
+      const w = Math.abs(x - action.startX);
+      const h = Math.abs(y - action.startY);
+      setDraft({ x: minX, y: minY, w, h });
+    } 
+    else if (action.type === "move") {
+      const dxDisplay = x - action.startX;
+      const dyDisplay = y - action.startY;
+      const dx = (dxDisplay / displaySize.w) * imgSize.w;
+      const dy = (dyDisplay / displaySize.h) * imgSize.h;
+      
+      setRegions(prev => prev.map(r => {
+        if (r.id === action.id) {
+          const w = action.origMaxX - action.origMinX;
+          const h = action.origMaxY - action.origMinY;
+          // Constrain movement
+          const newMinX = Math.max(0, Math.min(imgSize.w - w, action.origMinX + dx));
+          const newMinY = Math.max(0, Math.min(imgSize.h - h, action.origMinY + dy));
+          return {
+            ...r,
+            minX: newMinX,
+            minY: newMinY,
+            maxX: newMinX + w,
+            maxY: newMinY + h
+          };
+        }
+        return r;
+      }));
+    }
+    else if (action.type === "resize-br") {
+      setRegions(prev => prev.map(r => {
+        if (r.id === action.id) {
+          const pt = toNatural(Math.max(x, 0), Math.max(y, 0));
+          // Minimum size 10x10 px
+          const newMaxX = Math.max(r.minX + 10, pt.x);
+          const newMaxY = Math.max(r.minY + 10, pt.y);
+          return {
+            ...r,
+            maxX: newMaxX,
+            maxY: newMaxY
+          };
+        }
+        return r;
+      }));
+    }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (!drawing || !draft) return;
-    setDrawing(null);
+    if (!action) return;
 
-    if (draft.w < 10 || draft.h < 10) {
-      setDraft(null);
-      return;
+    if (action.type === "draw" && draft) {
+      if (draft.w >= 10 && draft.h >= 10) {
+        const topLeft = toNatural(draft.x, draft.y);
+        const bottomRight = toNatural(draft.x + draft.w, draft.y + draft.h);
+
+        setRegions((prev) => [
+          ...prev,
+          {
+            id: generateId(),
+            minX: Math.round(topLeft.x),
+            minY: Math.round(topLeft.y),
+            maxX: Math.round(bottomRight.x),
+            maxY: Math.round(bottomRight.y),
+          },
+        ]);
+      }
     }
 
-    const topLeft = toNatural(draft.x, draft.y);
-    const bottomRight = toNatural(draft.x + draft.w, draft.y + draft.h);
-
-    setRegions((prev) => [
-      ...prev,
-      {
-        id: generateId(),
-        minX: Math.round(topLeft.x),
-        minY: Math.round(topLeft.y),
-        maxX: Math.round(bottomRight.x),
-        maxY: Math.round(bottomRight.y),
-      },
-    ]);
+    setAction(null);
     setDraft(null);
   };
 
   const deleteRegion = (id: string) => {
     setRegions((prev) => prev.filter((r) => r.id !== id));
     setHoveredId(null);
+  };
+
+  const handleConfirmClean = () => {
+    // Evita pasar cajas rotas/negativas al servidor que causan fallos de cv2/extract
+    const validRegions = regions.filter(r => r.maxX - r.minX > 5 && r.maxY - r.minY > 5);
+    onConfirm(validRegions);
   };
 
   return (
@@ -229,7 +312,7 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm(regions)}
+            onClick={handleConfirmClean}
             disabled={regions.length === 0}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
@@ -243,9 +326,9 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
       <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/10 text-[11px] text-muted-foreground">
         <MousePointer className="w-3 h-3 text-primary shrink-0" />
         <span>
-          <strong className="text-foreground/70">Arrastra</strong> para añadir región ·{" "}
-          <strong className="text-foreground/70">×</strong> para eliminar ·{" "}
-          <strong className="text-foreground/70">Ajuste Óptico</strong> para centrar iconos automáticamente
+          <strong className="text-foreground/70">Arrastra en vacío</strong> añadir ·{" "}
+          <strong className="text-foreground/70">Pincha cuadro</strong> arrastrar/escalar ·{" "}
+          <strong className="text-foreground/70">Ajuste Óptico</strong> centrar automático
         </span>
       </div>
 
@@ -257,30 +340,44 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={() => { if (drawing) { setDrawing(null); setDraft(null); } }}
+        onMouseLeave={() => { if (action) { setAction(null); setDraft(null); } }}
       >
         <img
           src={imgEl.src}
           alt="Imagen fuente"
           draggable={false}
-          className="w-full h-auto block"
+          className="w-full h-auto block pointer-events-none"
           style={{ maxHeight: "60vh", objectFit: "contain" }}
         />
 
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full"
           viewBox={`0 0 ${displaySize.w} ${displaySize.h}`}
           xmlns="http://www.w3.org/2000/svg"
         >
           {regions.map((r) => {
             const tl = toDisplay(r.minX, r.minY);
             const br = toDisplay(r.maxX, r.maxY);
-            const w = br.x - tl.x;
-            const h = br.y - tl.y;
+            const w = Math.max(0, br.x - tl.x);
+            const h = Math.max(0, br.y - tl.y);
             const isHovered = hoveredId === r.id;
 
             return (
-              <g key={r.id}>
+              <g key={r.id} onMouseEnter={() => setHoveredId(r.id)} onMouseLeave={() => setHoveredId(null)}>
+                {/* Drag zone invisible */}
+                <rect
+                  x={tl.x}
+                  y={tl.y}
+                  width={w}
+                  height={h}
+                  fill="transparent"
+                  cursor="move"
+                  data-action="move"
+                  data-id={r.id}
+                  className="pointer-events-auto"
+                />
+                
+                {/* Box visible */}
                 <rect
                   x={tl.x}
                   y={tl.y}
@@ -288,13 +385,30 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
                   height={h}
                   fill={isHovered ? "hsl(var(--primary) / 0.08)" : "hsl(var(--primary) / 0.04)"}
                   stroke="hsl(var(--primary))"
-                  strokeWidth={isHovered ? 2 : 1.5}
-                  strokeDasharray={isHovered ? "none" : "6 3"}
+                  strokeWidth={isHovered || action?.id === r.id ? 2 : 1.5}
+                  strokeDasharray={isHovered || action?.id === r.id ? "none" : "6 3"}
                   rx={4}
-                  className="transition-all duration-150"
+                  className="transition-all duration-75 pointer-events-none"
                 />
-                <rect x={tl.x} y={tl.y - 18} width={Math.min(w, 60)} height={16} fill="hsl(var(--primary))" rx={3} />
-                <text x={tl.x + 4} y={tl.y - 6} fill="white" fontSize={9} fontWeight="bold">
+                
+                {/* Resize handle BR */}
+                <rect
+                  x={br.x - 6}
+                  y={br.y - 6}
+                  width={12}
+                  height={12}
+                  fill="white"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  rx={2}
+                  cursor="nwse-resize"
+                  data-action="resize-br"
+                  data-id={r.id}
+                  className="pointer-events-auto hover:fill-primary"
+                />
+
+                <rect x={tl.x} y={tl.y - 18} width={Math.min(w, 60)} height={16} fill="hsl(var(--primary))" rx={3} className="pointer-events-none" />
+                <text x={tl.x + 4} y={tl.y - 6} fill="white" fontSize={9} fontWeight="bold" className="pointer-events-none">
                   #{regions.indexOf(r) + 1}
                 </text>
               </g>
@@ -312,15 +426,15 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
               strokeWidth={1.5}
               strokeDasharray="4 2"
               rx={4}
+              className="pointer-events-none"
             />
           )}
         </svg>
 
         {regions.map((r) => {
-          const tl = toDisplay(r.minX, r.minY);
           const br = toDisplay(r.maxX, r.maxY);
           const btnX = br.x - 12;
-          const btnY = tl.y - 12;
+          const btnY = toDisplay(r.minX, r.minY).y - 12;
 
           return (
             <button
