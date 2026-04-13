@@ -1,5 +1,3 @@
-import heroLogo from "@/assets/hero-logo.png";
-
 const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
@@ -16,9 +14,9 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         <div className="mb-8 flex justify-center">
           <img
-            src={heroLogo}
+            src="/Grid Neon Sin Fondo.png"
             alt="GridXD"
-            className="w-24 h-24 animate-float object-fill"
+            className="w-32 h-32 animate-float object-contain"
           />
         </div>
 

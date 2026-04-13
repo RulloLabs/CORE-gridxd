@@ -24,8 +24,8 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
       {/* Brand area (optional, can be empty if logo is in Hero) */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 backdrop-blur-md">
-          <span className="text-primary font-black text-xs">G</span>
+        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center border border-primary/20 backdrop-blur-md bg-white/10">
+          <img src="/Grid Neon Sin Fondo.png" alt="GridXD Logo" className="w-full h-full object-contain" />
         </div>
       </div>
 

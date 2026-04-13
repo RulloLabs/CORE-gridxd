@@ -1,8 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, X, Loader2, Download, Sparkles, Lock } from "lucide-react";
+import { Upload, X, Loader2, Download, Sparkles, Lock, AlertTriangle } from "lucide-react";
 import { useImageProcessor, statusMessages } from "@/hooks/useImageProcessor";
+import { useIconGenerator } from "@/hooks/useIconGenerator";
 import { isBackendAvailable } from "@/lib/api";
 import IconEditor from "@/components/IconEditor";
+import { StyleCard } from "@/components/StyleCard";
+import { SidebarIconGenerator } from "@/components/SidebarIconGenerator";
 import { useProcessingHistory } from "@/hooks/useProcessingHistory";
 
 type CanvasMode = "grid" | "white" | "black" | "transparent";
@@ -43,13 +46,15 @@ async function compressIcon(dataUrl: string, quality = 0.85): Promise<string> {
 }
 
 const UploadSection = () => {
-  const { state, preview, icons, error, usedBackend, processImage, reset, options, detectedRegions, confirmRegions, pendingImgEl } = useImageProcessor();
+  const { state, preview, icons, error, usedBackend, visualStyle, processImage, reset, options, detectedRegions, confirmRegions, pendingImgEl, injectGeneratedIcon } = useImageProcessor();
+  const generator = useIconGenerator();
   const { saveToHistory } = useProcessingHistory();
   const [dragOver, setDragOver] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('grid');
   const [compressZip, setCompressZip] = useState(false);
   const [activeMode, setActiveMode] = useState<"extract" | "generate">("extract");
+  const [genVariant, setGenVariant] = useState<string>("outline");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-rename when project name changes
@@ -70,6 +75,22 @@ const UploadSection = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
+
+  // Sync AI Generated Icons to main workspace when done
+  useEffect(() => {
+    if (generator.state === "done" && generator.generatedIcons.length > 0) {
+      // Avoid duplicate injection if already synced
+      const alreadyHasGen = icons.some(i => i.name.includes("_GEN_"));
+      if (!alreadyHasGen) {
+        generator.generatedIcons.forEach(icon => {
+          if (icon.svgContent) {
+            injectGeneratedIcon(icon.svgContent, icon.id);
+          }
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.state]);
 
   const handleDownloadZip = async () => {
     // Show upsell for free users before download
@@ -118,7 +139,13 @@ const UploadSection = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) processImage(file);
+    if (file) {
+      if (activeMode === "generate") {
+        generator.generateSystem(file, genVariant);
+      } else {
+        processImage(file);
+      }
+    }
   };
 
   const handleReset = () => {
@@ -163,28 +190,153 @@ const UploadSection = () => {
         </div>
 
         {activeMode === "generate" ? (
-          <div className="bg-card border border-primary/20 rounded-2xl p-10 text-center shadow-lg relative overflow-hidden">
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 md:p-10 text-center shadow-lg relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-            <div className="relative z-10">
-              <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-foreground mb-3">
-                Generador de Sistema de Iconos
-              </h3>
-              <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                Sube tu logotipo y nuestra IA extraerá el "ADN Visual". Generaremos automáticamente los 24 iconos clave que toda app necesita (Navegación, Usuario, Sistema, etc.) usando el estilo exacto de tu marca.
-              </p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto mb-8 text-left opacity-70">
-                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-home.svg</div>
-                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-user.svg</div>
-                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-settings.svg</div>
-                <div className="bg-muted p-3 rounded-lg text-xs font-mono">icon-search.svg</div>
-              </div>
+            
+            {generator.state === "idle" && (
+              <div className="relative z-10">
+                <Sparkles className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+                <h3 className="text-2xl font-bold text-foreground mb-3">
+                  Generador de Sistema de Iconos
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto mb-8">
+                  Sube tu logotipo y nuestra IA extraerá el "ADN Visual". Generaremos automáticamente 24 iconos clave que toda app necesita.
+                </p>
 
-              <div className="inline-block bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
-                Próximamente en Q3 2026
+                {/* Style Selection before Upload */}
+                <div className="max-w-xs mx-auto mb-8 space-y-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">1. Elige tu estilo base</p>
+                  <div className="grid grid-cols-3 gap-2 p-1 bg-muted/50 rounded-xl border border-border/50">
+                    {["outline", "filled", "duotone"].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setGenVariant(v)}
+                        className={`px-3 py-2 text-[11px] rounded-lg font-bold capitalize transition-all ${
+                          genVariant === v 
+                            ? "bg-background text-primary shadow-sm border border-border" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-4">2. Sube tu referencia visual</p>
+                <div 
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const file = e.dataTransfer.files[0];
+                    if (file) generator.generateSystem(file, genVariant);
+                  }}
+                  onClick={() => inputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-12 transition-all cursor-pointer ${
+                    dragOver ? "border-primary bg-primary/5 scale-[1.02]" : "border-border hover:border-primary/50 hover:bg-muted/50"
+                  }`}
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground">Sube tu logo para extraer el ADN</p>
+                  <p className="text-xs text-muted-foreground mt-1">SVG, PNG o JPG</p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {(generator.state === "analyzing" || generator.state === "generating") && (
+              <div className="py-20 relative z-10">
+                <div className="relative w-20 h-20 mx-auto mb-8">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                  <div className="relative bg-card border border-primary/50 rounded-full w-full h-full flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {generator.state === "analyzing" ? "Analizando ADN Visual..." : "Generando Iconos del Sistema..."}
+                </h3>
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  Gemini Vision está interpretando tus trazos y colores
+                </p>
+              </div>
+            )}
+
+            {generator.state === "done" && generator.visualStyle && (
+              <div className="relative z-10 text-left">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-2xl font-bold text-foreground">Sistema Generado</h3>
+                  <button 
+                    onClick={generator.reset}
+                    className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" /> Reiniciar
+                  </button>
+                </div>
+
+                <StyleCard style={generator.visualStyle} className="mb-10" />
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {generator.generatedIcons.map((icon) => (
+                    <div 
+                      key={icon.id}
+                      className="group bg-muted/30 border border-border/50 p-6 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:border-primary/30 hover:bg-primary/5 relative"
+                    >
+                      {icon.svgContent && (
+                        <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-primary/20 text-[8px] font-bold text-primary rounded uppercase tracking-wider">
+                          AI
+                        </div>
+                      )}
+                      <div className="relative w-10 h-10 flex items-center justify-center">
+                        {icon.svgContent ? (
+                          <div 
+                            className="w-full h-full transition-transform group-hover:scale-110"
+                            style={{ color: generator.visualStyle?.color_primary }}
+                            dangerouslySetInnerHTML={{ __html: icon.svgContent }}
+                          />
+                        ) : (
+                          <icon.icon 
+                            className="w-full h-full transition-transform group-hover:scale-110" 
+                            style={{ 
+                              color: generator.visualStyle?.color_primary,
+                              strokeWidth: generator.visualStyle?.stroke_width || 2
+                            }} 
+                          />
+                        )}
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground">{icon.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10 p-6 rounded-xl bg-primary/5 border border-primary/20 flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h4 className="font-bold text-foreground">¿Listo para exportar?</h4>
+                    <p className="text-sm text-muted-foreground italic">El backend generativo estará disponible pronto para exportar SVGs únicos.</p>
+                  </div>
+                  <button 
+                    onClick={() => generator.downloadPack(options.projectName)}
+                    className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2 glow-cyan"
+                  >
+                    <Download className="w-5 h-5" /> Descargar Pack DNA
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {generator.error && (
+              <div className="py-20 relative z-10">
+                <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-foreground mb-2">Ops! Algo salió mal</h3>
+                <p className="text-sm text-muted-foreground mb-6">{generator.error}</p>
+                <button 
+                  onClick={generator.reset}
+                  className="px-6 py-2 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
+                >
+                  Intentar de nuevo
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -199,63 +351,58 @@ const UploadSection = () => {
             {isBackendAvailable() ? "Railway API: Connected" : "Local Engine: Active"}
           </span>
         </div>
-        <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-6 bg-card border border-border p-6 rounded-2xl shadow-sm">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-foreground">Nombre del Proyecto</label>
-            <input 
-              type="text" 
+        <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-8 bg-card border border-border p-8 rounded-2xl shadow-sm">
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">
+              Nombre del Proyecto
+            </label>
+            <input
+              type="text"
               placeholder="Ej: Dashboard_Icons"
               value={options.projectName}
               onChange={(e) => options.setProjectName(e.target.value)}
-              className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full bg-muted border border-border p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-foreground"
             />
           </div>
-          
-          <div className="flex flex-col justify-center gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground">Eliminar Fondo</span>
-                <span className="text-[10px] text-muted-foreground">Activa transparencia PNG</span>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={options.removeBackground}
-                onChange={(e) => options.setRemoveBackground(e.target.checked)}
-                className="w-5 h-5 accent-primary"
-              />
-            </div>
-          </div>
 
-          <div className="flex flex-col justify-center gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground flex items-center gap-1">
-                  Alta Resolución 
-                  <span className="bg-primary/10 text-primary text-[9px] px-1.5 py-0.5 rounded-full">PRO</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground">Escalado 2K con IA</span>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={options.upscale}
-                onChange={(e) => options.setUpscale(e.target.checked)}
-                className="w-5 h-5 accent-primary"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Fondo</span>
+              <button
+                onClick={() => options.setRemoveBackground(!options.removeBackground)}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  options.removeBackground ? "bg-primary/10 border-primary text-primary" : "bg-muted border-border text-muted-foreground"
+                }`}
+              >
+                <span className="text-xs font-bold">{options.removeBackground ? "EXTRACT" : "KEEP"}</span>
+                <Sparkles className={`w-4 h-4 ${options.removeBackground ? "opacity-100" : "opacity-40"}`} />
+              </button>
             </div>
-          </div>
 
-          <div className="flex flex-col justify-center gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground">Compresión ZIP</span>
-                <span className="text-[10px] text-muted-foreground">Reduce tamaño ~50%</span>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={compressZip}
-                onChange={(e) => setCompressZip(e.target.checked)}
-                className="w-5 h-5 accent-primary"
-              />
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Calidad</span>
+              <button
+                onClick={() => options.setUpscale(!options.upscale)}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  options.upscale ? "bg-primary/10 border-primary text-primary" : "bg-muted border-border text-muted-foreground"
+                }`}
+              >
+                <span className="text-xs font-bold">{options.upscale ? "2K UHD" : "STD"}</span>
+                <Maximize2 className={`w-4 h-4 ${options.upscale ? "opacity-100" : "opacity-40"}`} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">ZIP</span>
+              <button
+                onClick={() => setCompressZip(!compressZip)}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  compressZip ? "bg-primary/10 border-primary text-primary" : "bg-muted border-border text-muted-foreground"
+                }`}
+              >
+                <span className="text-xs font-bold">{compressZip ? "READY" : "OFF"}</span>
+                <Download className={`w-4 h-4 ${compressZip ? "opacity-100" : "opacity-40"}`} />
+              </button>
             </div>
           </div>
         </div>
@@ -391,84 +538,128 @@ const UploadSection = () => {
               </div>
             </div>
 
-            {/* PREMIUM FIGMA-STYLE PREVIEW CANVAS */}
-            <div className="relative rounded-2xl border border-border/50 overflow-hidden shadow-2xl mb-8">
-              {/* Toolbar/Header mimicking a design tool */}
-              <div className="border-b border-border/50 bg-white/80 dark:bg-black/80 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-red-400/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-400/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-400/80" />
-                  <span className="ml-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    Design System Preview · {icons.length} Assets
-                  </span>
-                </div>
-                {/* Modo Diseño Controls */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-muted-foreground mr-2 font-semibold uppercase tracking-wider">Fondo</span>
-                  {([ 
-                    { mode: 'grid' as CanvasMode, label: '⊞', title: 'Cuadrícula' },
-                    { mode: 'white' as CanvasMode, label: '○', title: 'Blanco' },
-                    { mode: 'black' as CanvasMode, label: '●', title: 'Negro' },
-                    { mode: 'transparent' as CanvasMode, label: '◧', title: 'Transparente' },
-                  ]).map(({ mode, label, title }) => (
-                    <button
-                      key={mode}
-                      title={title}
-                      onClick={() => setCanvasMode(mode)}
-                      className={`w-7 h-7 rounded-md text-sm font-bold transition-all ${
-                        canvasMode === mode
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'bg-muted/60 text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+            {/* MAIN CONTENT ROW: PREVIEW + GENERATOR SIDEBAR */}
+            <div className="flex flex-col lg:flex-row gap-8 items-start mb-12">
+              <div className="flex-1 w-full order-2 lg:order-1">
+                {/* Visual DNA card — shown when Gemini analysis is available */}
+                {visualStyle && (
+                  <StyleCard style={visualStyle} className="mb-6" />
+                )}
+
+                {/* PREMIUM FIGMA-STYLE PREVIEW CANVAS */}
+                <div className="relative rounded-2xl border border-border/50 overflow-hidden shadow-2xl">
+                  {/* Toolbar/Header mimicking a design tool */}
+                  <div className="border-b border-border/50 bg-white/80 dark:bg-black/80 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-amber-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-400/80" />
+                      <span className="ml-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        Design System Preview · {icons.length} Assets
+                      </span>
+                    </div>
+                    {/* Modo Diseño Controls */}
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground mr-2 font-semibold uppercase tracking-wider">Fondo</span>
+                      {([ 
+                        { mode: 'grid' as CanvasMode, label: '⊞', title: 'Cuadrícula' },
+                        { mode: 'white' as CanvasMode, label: '○', title: 'Blanco' },
+                        { mode: 'black' as CanvasMode, label: '●', title: 'Negro' },
+                        { mode: 'transparent' as CanvasMode, label: '◧', title: 'Transparente' },
+                      ]).map(({ mode, label, title }) => (
+                        <button
+                          key={mode}
+                          title={title}
+                          onClick={() => setCanvasMode(mode)}
+                          className={`w-7 h-7 rounded-md text-sm font-bold transition-all ${
+                            canvasMode === mode
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Canvas Area — Dynamic Background Mode */}
+                  <div 
+                    className="p-8 pb-12 w-full max-h-[600px] overflow-y-auto transition-all duration-500"
+                    style={canvasBgStyles[canvasMode]}
+                  >
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-6 max-w-5xl mx-auto">
+                      {icons.map((icon) => (
+                        <div
+                          key={icon.id}
+                          className={`group relative flex flex-col items-center gap-3 transition-all duration-300 ${!usedBackend ? "opacity-80" : ""}`}
+                        >
+                          {/* Icon Base */}
+                          <div 
+                            className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-white dark:bg-[#0A0A0A] rounded-xl flex items-center justify-center border border-border/30 shadow-sm transition-all overflow-hidden relative hover-glow-premium ${
+                              usedBackend ? "animate-breath" : ""
+                            }`}
+                          >
+                            {icon.name.includes("_GEN_") && (
+                              <div className="absolute top-1 right-1 px-1 py-0.5 bg-primary/20 text-[6px] font-black text-primary rounded-[2px] uppercase tracking-wider z-20">
+                                AI
+                              </div>
+                            )}
+                            {icon.svgContent ? (
+                              <div 
+                                className="w-full h-full p-4 text-foreground transition-transform group-hover:scale-110" 
+                                dangerouslySetInnerHTML={{ __html: icon.svgContent }}
+                              />
+                            ) : (
+                              <img
+                                src={icon.dataUrl}
+                                alt={icon.name}
+                                className={`w-full h-full object-contain p-4 ${
+                                  !usedBackend ? "blur-[4px] scale-105" : ""
+                                }`}
+                              />
+                            )}
+                            {!usedBackend && !icon.svgContent && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-background/5 backdrop-blur-[2px]">
+                                <Lock className="w-5 h-5 text-primary drop-shadow-md" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Label below icon */}
+                          <div className="w-full text-center px-1">
+                            <p className="text-[9px] sm:text-[10px] font-medium text-muted-foreground group-hover:text-foreground truncate transition-colors">
+                              {icon.name.replace('.png', '').replace('.svg', '')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Canvas Area — Dynamic Background Mode */}
-              <div 
-                className="p-8 pb-12 w-full max-h-[500px] overflow-y-auto transition-all duration-500"
-                style={canvasBgStyles[canvasMode]}
-              >
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-6 max-w-5xl mx-auto">
-                  {icons.map((icon) => (
-                    <div
-                      key={icon.id}
-                      className={`group relative flex flex-col items-center gap-3 transition-all duration-300 ${!usedBackend ? "opacity-80" : ""}`}
-                    >
-                      {/* Icon Base */}
-                      <div 
-                        className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-white dark:bg-[#0A0A0A] rounded-xl flex items-center justify-center border border-border/30 shadow-sm transition-all overflow-hidden relative hover-glow-premium ${
-                          usedBackend ? "animate-breath" : ""
-                        }`}
-                      >
-                        <img
-                          src={icon.dataUrl}
-                          alt={icon.name}
-                          className={`w-full h-full object-contain p-4 ${
-                            !usedBackend ? "blur-[4px] scale-105" : ""
-                          }`}
+              {/* SIDEBAR FOR GENERATION */}
+              {visualStyle && (
+                <div className="order-1 lg:order-2">
+                  <SidebarIconGenerator 
+                    visualStyle={visualStyle} 
+                    onIconGenerated={(svg, name) => injectGeneratedIcon(svg, name)} 
+                  />
+                  <div className="mt-4 p-4 rounded-2xl bg-muted/30 border border-border/50 text-center">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Estado del Pack</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: `${Math.min((icons.length / 24) * 100, 100)}%` }}
                         />
-                        {!usedBackend && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/5 backdrop-blur-[2px]">
-                            <Lock className="w-5 h-5 text-primary drop-shadow-md" />
-                          </div>
-                        )}
                       </div>
-                      
-                      {/* Label below icon */}
-                      <div className="w-full text-center px-1">
-                        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-foreground truncate transition-colors">
-                          {icon.name.replace('.png', '')}
-                        </p>
-                      </div>
+                      <span className="text-[10px] font-mono font-bold text-foreground">{icons.length}/24</span>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {!usedBackend && !showUpsell && (

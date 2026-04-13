@@ -14,9 +14,26 @@ export interface ProcessingOptions {
   projectName?: string;
 }
 
+// ── Visual Style DNA returned by Gemini Vision ──────────────────────────────
+export interface VisualStyle {
+  style: "outline" | "filled" | "duotone";
+  stroke_width: number;
+  corner_radius: "sharp" | "soft" | "rounded";
+  color_primary: string;
+  color_secondary: string;
+  color_accent: string;
+  color_bg: string;
+  mood: "minimal" | "playful" | "corporate" | "luxury" | "techno";
+  complexity: "simple" | "medium" | "detailed";
+  grid_size: number;
+  visual_weight: "light" | "regular" | "bold";
+  notes: string;
+}
+
 export interface ProcessedResult {
   zipUrl: string;
   images: { url: string; name: string }[];
+  visualStyle?: VisualStyle;
 }
 
 export interface UserTier {
@@ -149,4 +166,58 @@ export function getProcessingStrategy(tier: UserTier): "client" | "backend" {
   if (tier.tier === "free") return "client";
   if (!isBackendAvailable()) return "client";
   return "backend";
+}
+
+/**
+ * Call the backend /extract-style endpoint.
+ * Sends the image and receives the visual DNA (Gemini Vision analysis).
+ * Available to all users — the backend falls back to defaults if no API key.
+ */
+export async function extractStyleFromBackend(file: File): Promise<VisualStyle | null> {
+  if (!API_BASE_URL) return null;
+
+  try {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`${API_BASE_URL}/extract-style`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return (data?.style as VisualStyle) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateIconSVG(
+  iconName: string, 
+  dna: VisualStyle,
+  variant: string = "outline"
+): Promise<string | null> {
+  if (!API_BASE_URL) return null;
+
+  try {
+    const formData = new FormData();
+    formData.append("icon_name", iconName);
+    formData.append("dna", JSON.stringify(dna));
+    formData.append("variant", variant);
+
+    const response = await fetch(`${API_BASE_URL}/generate-icon`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return (data?.svg as string) ?? null;
+  } catch (err) {
+    console.error("Icon generation error:", err);
+    return null;
+  }
 }

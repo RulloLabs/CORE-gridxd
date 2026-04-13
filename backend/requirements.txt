@@ -6,3 +6,5 @@ opencv-python-headless
 pillow
 rembg
 onnxruntime
+httpx
+python-dotenv

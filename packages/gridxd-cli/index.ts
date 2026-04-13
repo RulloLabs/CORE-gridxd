@@ -38,7 +38,7 @@ program
       form.append("options", JSON.stringify({
         upscale: options.upscale,
         removeBackground: options.bgRemoval
-      }));* -+º
+      }));
 
       console.log(chalk.gray(`Subiendo ${path.basename(filePath)} al motor de IA...`));
 
@@ -58,10 +58,14 @@ program
         console.log(chalk.yellow("⚠️ No se detectaron iconos en la imagen."));
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(chalk.red("❌ Error en el procesamiento:"));
-      console.error(error.message);
-      if (error.response?.data) console.error(chalk.red(JSON.stringify(error.response.data, null, 2)));
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+      if (axios.isAxiosError(error) && error.response?.data) {
+        console.error(chalk.red(JSON.stringify(error.response.data, null, 2)));
+      }
       process.exit(1);
     }
   });

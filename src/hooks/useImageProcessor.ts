@@ -3,7 +3,9 @@ import {
   incrementUsage,
   getProcessingStrategy,
   processImageBackend,
+  extractStyleFromBackend,
   ProcessingOptions,
+  VisualStyle,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -195,8 +197,8 @@ async function extractIconsFromRegions(
   regions: Region[],
   options: ProcessingOptions
 ): Promise<ExtractedIcon[]> {
-  // @ts-ignore
-  const ImageTracer = (await import("imagetracerjs")).default;
+  const ImageTracerModule = await import("imagetracerjs");
+  const ImageTracer = ImageTracerModule.default || ImageTracerModule;
 
   const canvas = document.createElement("canvas");
   canvas.width = imgEl.width;
@@ -300,6 +302,7 @@ export function useImageProcessor() {
   const [detectedRegions, setDetectedRegions] = useState<Region[]>([]);
   const [pendingImgEl, setPendingImgEl] = useState<HTMLImageElement | null>(null);
   const [pendingOptions, setPendingOptions] = useState<ProcessingOptions | null>(null);
+  const [visualStyle, setVisualStyle] = useState<VisualStyle | null>(null);
 
   // Options
   const [removeBackground, setRemoveBackground] = useState(true);
@@ -356,12 +359,15 @@ export function useImageProcessor() {
     [pendingImgEl, pendingOptions]
   );
 
-  // ─── Client-side flow: detect → editing state ─────────────────────────────
+  // ─── Client-side flow: detect → style extract (parallel) → editing ────────
   const processClientSide = useCallback(
     async (file: File, options: ProcessingOptions) => {
       setState("uploading");
       await delay(400);
       setState("detecting");
+
+      // Kick off Gemini style extraction in parallel with image loading
+      const stylePromise = extractStyleFromBackend(file);
 
       // Load image element (reused across phases)
       const imgEl = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -374,6 +380,10 @@ export function useImageProcessor() {
       await delay(600);
 
       const regions = detectRegionsFromCanvas(imgEl);
+
+      // Resolve style analysis (non-blocking — null if backend not configured)
+      const style = await stylePromise;
+      if (style) setVisualStyle(style);
 
       // Save for editor
       setPendingImgEl(imgEl);
@@ -465,7 +475,24 @@ export function useImageProcessor() {
     setDetectedRegions([]);
     setPendingImgEl(null);
     setPendingOptions(null);
+    setVisualStyle(null);
   };
+
+  const injectGeneratedIcon = useCallback((svgContent: string, conceptName: string) => {
+    const today = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const resLabel = upscale ? "2K" : "HD";
+    
+    setIcons(prev => {
+      const newId = prev.length + 1;
+      const newIcon: ExtractedIcon = {
+        id: newId,
+        dataUrl: "", // Should handle this if we need a preview, but for now we rely on svg
+        svgContent,
+        name: `GRIDXD_GEN_${conceptName.toUpperCase()}_${newId.toString().padStart(2, "0")}_${resLabel}_${today}.svg`
+      };
+      return [...prev, newIcon];
+    });
+  }, [upscale]);
 
   return {
     state,
@@ -473,8 +500,10 @@ export function useImageProcessor() {
     icons,
     error,
     usedBackend,
+    visualStyle,
     processImage,
     reset,
+    injectGeneratedIcon,
     // Editor
     detectedRegions,
     confirmRegions,

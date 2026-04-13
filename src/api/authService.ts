@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 /**
  * Service to handle Authentication operations.
@@ -25,7 +26,7 @@ export const authService = {
   /**
    * Get auth state change listener
    */
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
     const { data } = supabase.auth.onAuthStateChange(callback);
     return data.subscription;
   },

@@ -1,3 +1,14 @@
+import { 
+  Clock, 
+  Maximize2, 
+  Sparkles, 
+  Rocket, 
+  Palette, 
+  Zap, 
+  FileStack, 
+  Code2
+} from "lucide-react";
+
 const testimonials = [
   {
     name: "Carlos M.",
@@ -36,25 +47,25 @@ const testimonials = [
 
 const useCases = [
   {
-    icon: "🎨",
+    icon: <Palette className="w-8 h-8 text-primary" />,
     title: "Design Systems",
     description:
       "Extrae iconos de capturas de pantalla de productos y convierte tu inspiración en activos listos para producción.",
   },
   {
-    icon: "⚡",
+    icon: <Zap className="w-8 h-8 text-primary" />,
     title: "Sprints de Producto",
     description:
       "Importa iconos de cualquier fuente durante un sprint sin perder tiempo en recortes manuales.",
   },
   {
-    icon: "📦",
+    icon: <FileStack className="w-8 h-8 text-primary" />,
     title: "Migración de Assets",
     description:
       "Convierte bibliotecas de iconos antiguas a SVG vectorial con un solo upload.",
   },
   {
-    icon: "🤝",
+    icon: <Code2 className="w-8 h-8 text-primary" />,
     title: "Handoff a Desarrollo",
     description:
       "Genera ZIPs con nombres estandarizados listos para consumir por cualquier equipo de ingeniería.",
@@ -130,18 +141,18 @@ const SocialProofSection = () => {
         {/* Stat bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20">
           {[
-            { value: "2h", label: "Ahorradas por imagen", icon: "⏱" },
-            { value: "48px→2K", label: "Resolución garantizada", icon: "🔬" },
-            { value: "SVG", label: "Vector listo para producción", icon: "✨" },
-            { value: "< 30s", label: "Tiempo de proceso", icon: "🚀" },
+            { value: "2h", label: "Ahorradas por imagen", icon: <Clock className="w-6 h-6 text-primary" /> },
+            { value: "48px→2K", label: "Resolución garantizada", icon: <Maximize2 className="w-6 h-6 text-primary" /> },
+            { value: "SVG", label: "Vector listo para producción", icon: <Sparkles className="w-6 h-6 text-primary" /> },
+            { value: "< 30s", label: "Tiempo de proceso", icon: <Rocket className="w-6 h-6 text-primary" /> },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-xl border border-border/50 bg-card p-5 text-center hover:border-primary/30 transition-colors"
+              className="rounded-xl border border-border/50 bg-card p-5 text-center hover:border-primary/30 transition-colors flex flex-col items-center justify-center gap-2"
             >
-              <p className="text-2xl mb-1">{stat.icon}</p>
+              <div className="mb-1">{stat.icon}</div>
               <p className="text-2xl font-black text-foreground">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{stat.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -159,7 +170,7 @@ const SocialProofSection = () => {
               key={uc.title}
               className="rounded-xl border border-border/50 bg-card/50 p-5 hover:bg-card hover:border-primary/20 transition-all duration-300 group"
             >
-              <p className="text-3xl mb-3">{uc.icon}</p>
+              <div className="mb-3">{uc.icon}</div>
               <h4 className="font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                 {uc.title}
               </h4>
