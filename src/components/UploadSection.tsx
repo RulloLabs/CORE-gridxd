@@ -3,6 +3,7 @@ import { Upload, X, Loader2, Download, Sparkles, Lock } from "lucide-react";
 import { useImageProcessor, statusMessages } from "@/hooks/useImageProcessor";
 import { isBackendAvailable } from "@/lib/api";
 import IconEditor from "@/components/IconEditor";
+import { useProcessingHistory } from "@/hooks/useProcessingHistory";
 
 type CanvasMode = "grid" | "white" | "black" | "transparent";
 
@@ -43,6 +44,7 @@ async function compressIcon(dataUrl: string, quality = 0.85): Promise<string> {
 
 const UploadSection = () => {
   const { state, preview, icons, error, usedBackend, processImage, reset, options, detectedRegions, confirmRegions, pendingImgEl } = useImageProcessor();
+  const { saveToHistory } = useProcessingHistory();
   const [dragOver, setDragOver] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('grid');
@@ -53,6 +55,20 @@ const UploadSection = () => {
   useEffect(() => {
     options.updateIconNames();
   }, [options.projectName, options.upscale]);
+
+  // Auto-save to Supabase history when processing completes
+  useEffect(() => {
+    if (state === "done" && icons.length > 0) {
+      saveToHistory({
+        project_name: options.projectName || "Sin nombre",
+        icon_count: icons.length,
+        resolution: options.upscale ? "2K" : "HD",
+        used_backend: usedBackend,
+        firstIconDataUrl: icons[0]?.dataUrl,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   const handleDownloadZip = async () => {
     // Show upsell for free users before download
