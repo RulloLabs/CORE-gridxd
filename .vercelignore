@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+supabase
+backend
+packages
+**/node_modules
+**/__pycache__
+.temp
+cli-latest
