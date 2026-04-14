@@ -164,6 +164,7 @@ const UploadSection = () => {
   };
 
   return (
+    <>
     <section id="upload" className="py-24 px-4">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
@@ -810,6 +811,7 @@ const UploadSection = () => {
         onClose={() => setUpgradeStyle(null)}
         blockedStyle={upgradeStyle ?? "filled"}
       />
+    </>
   );
 };
 
