@@ -53,7 +53,7 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
 
       {/* Modal */}
       <div className="fixed inset-0 z-[90] flex items-center justify-center px-4 pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="pointer-events-auto w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="relative p-6 pb-0">
             <button

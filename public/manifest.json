@@ -1,0 +1,18 @@
+{
+  "name": "GridXD — Design Intelligence",
+  "short_name": "GridXD",
+  "description": "IA que extrae iconos, quita fondos y genera sistemas de diseño en segundos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#00f2ff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -89,13 +89,13 @@ function detectRegionsFromCanvas(
         continue;
       }
 
-      const queue = [{ x, y }];
+      const queue: { x: number; y: number }[] = [{ x, y }];
       let minX = x, minY = y, maxX = x, maxY = y;
       visited[idx] = 1;
       let count = 0;
 
       while (queue.length > 0 && count < 50000) {
-        const p = queue.shift()!;
+        const p = queue.pop()!;
         count++;
         minX = Math.min(minX, p.x);
         minY = Math.min(minY, p.y);
@@ -276,7 +276,7 @@ async function extractIconsFromRegions(
     const paddedId = id.toString().padStart(2, "0");
     const resLabel = options.upscale ? "2K" : "HD";
 
-    const svgString = ImageTracer.imagedataToSVG(
+    const svgString = ImageTracer.getSVGString(
       tempCtx.getImageData(0, 0, sw, sh),
       { ltres: 0.1, qtres: 1, pathomit: 8, colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5 }
     );

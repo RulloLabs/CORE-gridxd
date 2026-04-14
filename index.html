@@ -7,6 +7,10 @@
     <title>GridXD</title>
     <meta name="description" content="GridXD: De captura a assets en 5 segundos. IA que extrae iconos, quita fondos y nombra archivos automáticamente. Un flujo de diseño en calma, armonía y paz.">
     <meta name="author" content="Lovable" />
+    <meta name="theme-color" content="#0a0c10" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- TODO: Update og:title to match your application name -->
     
@@ -28,5 +32,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
 </html>
