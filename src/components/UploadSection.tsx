@@ -9,6 +9,7 @@ import IconEditor from "@/components/IconEditor";
 import { StyleCard } from "@/components/StyleCard";
 import { SidebarIconGenerator } from "@/components/SidebarIconGenerator";
 import { useProcessingHistory } from "@/hooks/useProcessingHistory";
+import UpgradeModal from "@/components/UpgradeModal";
 
 type CanvasMode = "grid" | "white" | "black" | "transparent";
 
@@ -59,6 +60,7 @@ const UploadSection = () => {
   const [activeMode, setActiveMode] = useState<"extract" | "generate">("extract");
   const [genVariant, setGenVariant] = useState<string>("outline");
   const [exportStyle, setExportStyle] = useState<SvgStyle>("outline");
+  const [upgradeStyle, setUpgradeStyle] = useState<SvgStyle | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-rename when project name changes
@@ -294,7 +296,7 @@ const UploadSection = () => {
                       return (
                         <button
                           key={s}
-                          onClick={() => !locked && generator.setActiveStyle(s)}
+                          onClick={() => locked ? setUpgradeStyle(s) : generator.setActiveStyle(s)}
                           title={locked ? "Requiere plan PRO" : STYLE_META[s].description}
                           className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                             locked
@@ -472,7 +474,10 @@ const UploadSection = () => {
                   <button
                     key={s}
                     onClick={() => {
-                      if (locked) return; // Upsell to be added
+                      if (locked) {
+                        setUpgradeStyle(s);
+                        return;
+                      }
                       setExportStyle(s);
                     }}
                     title={locked ? "Requiere plan PRO" : meta.description}
@@ -798,6 +803,13 @@ const UploadSection = () => {
         )}
       </div>
     </section>
+
+      {/* Upsell Modal — shown when FREE user clicks a locked style */}
+      <UpgradeModal
+        open={upgradeStyle !== null}
+        onClose={() => setUpgradeStyle(null)}
+        blockedStyle={upgradeStyle ?? "filled"}
+      />
   );
 };
 

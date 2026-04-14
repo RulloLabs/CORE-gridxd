@@ -22,10 +22,16 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
-      {/* Brand area (optional, can be empty if logo is in Hero) */}
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center border border-primary/20 backdrop-blur-md bg-white/10">
-          <img src="/Grid Neon Sin Fondo.png" alt="GridXD Logo" className="w-full h-full object-contain" />
+      {/* Brand — horizontal lockup: logo + wordmark */}
+      <div className="flex items-center gap-3">
+        <img
+          src="/Grid Neon Sin Fondo.png"
+          alt="GridXD"
+          className="w-9 h-9 object-contain"
+        />
+        <div className="flex flex-col leading-none">
+          <span className="text-sm font-black tracking-tight text-foreground">GridXD</span>
+          <span className="text-[10px] font-medium text-muted-foreground tracking-wider hidden sm:block">Design Intelligence</span>
         </div>
       </div>
 
