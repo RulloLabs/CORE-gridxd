@@ -25,7 +25,7 @@ const Header = () => {
       {/* Brand — horizontal lockup: logo + wordmark */}
       <div className="flex items-center gap-3">
         <img
-          src="/Grid Neon Sin Fondo.png"
+          src="/Grid Ne_n Sin Fondo.png"
           alt="GridXD"
           className="w-9 h-9 object-contain"
         />
