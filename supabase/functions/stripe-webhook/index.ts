@@ -18,8 +18,8 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
  */
 
 const PRODUCT_TO_TIER: Record<string, string> = {
-  prod_UJ5Nr6xHc88Rm5: "pro",
-  prod_UJ5OWqjvs10ZpX: "proplus",
+  prod_UAPq4WGjOqrxdg: "pro",      // Starter en Stripe
+  prod_UAPq0CGWvYwiI5: "proplus",  // Pro en Stripe
 };
 
 const corsHeaders = {
