@@ -44,8 +44,25 @@ export interface UserTier {
 /**
  * Check if a real backend is configured and available
  */
-export function isBackendAvailable(): boolean {
+export function isBackendConfigured(): boolean {
   return !!API_BASE_URL;
+}
+
+/**
+ * Perform a real health check against the backend
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+  if (!API_BASE_URL) return false;
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, { 
+      method: "GET",
+      signal: AbortController.timeout(3000) as any // Timeout after 3s
+    });
+    return response.ok;
+  } catch (err) {
+    console.warn("Backend health check failed:", err);
+    return false;
+  }
 }
 
 /**
@@ -119,7 +136,21 @@ FAIL CONDITIONS (DO NOT DO):
     throw new Error(error.detail || `Error ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  // Prepend API_BASE_URL to absolute paths returned by the backend
+  if (result.zipUrl && result.zipUrl.startsWith("/")) {
+    result.zipUrl = `${API_BASE_URL}${result.zipUrl}`;
+  }
+  
+  if (result.images) {
+    result.images = result.images.map((img: any) => ({
+      ...img,
+      url: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
+    }));
+  }
+
+  return result;
 }
 
 
@@ -164,7 +195,7 @@ export function incrementUsage(): void {
  */
 export function getProcessingStrategy(tier: UserTier): "client" | "backend" {
   if (tier.tier === "free") return "client";
-  if (!isBackendAvailable()) return "client";
+  if (!isBackendConfigured()) return "client";
   return "backend";
 }
 

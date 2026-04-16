@@ -39,4 +39,4 @@ Icon Set (El Pack Estándar Profesional)
 - [x] **Figma Plugin (V2):** Integración bidireccional (pull de frames, push de assets directos a Figma sin descargar ZIP).
 
 ### 6. Pruebas & Calidad (QA)
-- [ ] **Stripe E2E:** Testar flujo de pago en producción (compra test tarjeta 4242, verificación de webhooks y sincronización de base de datos/plan).
+- [/] **Stripe E2E:** Testar flujo de pago en producción (compra test tarjeta 4242, verificación de webhooks y sincronización de base de datos/plan). [IDs de producto actualizados]
