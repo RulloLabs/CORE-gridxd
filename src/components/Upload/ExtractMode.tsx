@@ -31,6 +31,23 @@ const canvasBgStyles: Record<string, React.CSSProperties> = {
 
 export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade, onDownload }: ExtractModeProps) => {
   const { tier } = useAuth();
+  
+  const {
+    state,
+    preview,
+    icons,
+    usedBackend,
+    visualStyle,
+    processImages,
+    reset,
+    injectGeneratedIcon,
+    detectedRegions,
+    confirmRegions,
+    pendingImgEl,
+    options
+  } = processor;
+
+  const inputRef = useRef<HTMLInputElement>(null);
   const [canvasMode, setCanvasMode] = useState<'grid' | 'white' | 'black' | 'transparent'>('grid');
   const [dragOver, setDragOver] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>(

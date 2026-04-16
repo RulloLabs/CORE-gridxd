@@ -54,10 +54,15 @@ export function isBackendConfigured(): boolean {
 export async function checkBackendHealth(): Promise<boolean> {
   if (!API_BASE_URL) return false;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
     const response = await fetch(`${API_BASE_URL}/health`, { 
       method: "GET",
-      signal: AbortController.timeout(3000) as any // Timeout after 3s
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (err) {
     console.warn("Backend health check failed:", err);
