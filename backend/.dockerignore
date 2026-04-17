@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# OS/IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Backend specific
+uploads/
+temp_zip/
+static/processed/
+*.zip
+*.log
