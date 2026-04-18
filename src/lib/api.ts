@@ -149,8 +149,8 @@ FAIL CONDITIONS (DO NOT DO):
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Error del servidor de Railway" }));
-    throw new Error(error.detail || `Error ${response.status}`);
+    const errorData = await response.json().catch(() => ({ detail: "Error del servidor de Railway" })) as { detail?: string };
+    throw new Error(errorData.detail || `Error ${response.status}`);
   }
 
   const result = await response.json();
