@@ -161,7 +161,7 @@ FAIL CONDITIONS (DO NOT DO):
   }
   
   if (result.images) {
-    result.images = result.images.map((img: any) => ({
+    result.images = result.images.map((img: ProcessedResult["images"][0]) => ({
       ...img,
       url: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
     }));

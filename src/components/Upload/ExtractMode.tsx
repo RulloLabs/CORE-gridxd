@@ -6,28 +6,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import IconEditor from "@/components/IconEditor";
 import { StyleCard } from "@/components/StyleCard";
 import { SidebarIconGenerator } from "@/components/SidebarIconGenerator";
+import { useImageProcessor, ExtractedIcon } from "@/hooks/useImageProcessor";
+import { UserTier } from "@/lib/api";
 
 interface ExtractModeProps {
-  processor: any; // useImageProcessor return type
+  processor: ReturnType<typeof useImageProcessor>;
   exportStyle: SvgStyle;
   setExportStyle: (s: SvgStyle) => void;
   onUpgrade: (s: SvgStyle) => void;
   onDownload: () => void;
 }
 
-const canvasBgStyles: Record<string, React.CSSProperties> = {
-  grid: {
-    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(150,150,150,0.15) 1px, transparent 0)',
-    backgroundSize: '24px 24px',
-  },
-  white: { background: '#ffffff' },
-  black: { background: '#000000' },
-  transparent: {
-    backgroundImage: 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
-    backgroundSize: '16px 16px',
-    backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
-  },
-};
+
 
 export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade, onDownload }: ExtractModeProps) => {
   const { tier } = useAuth();
@@ -136,9 +126,9 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                 </div>
               </div>
 
-              <div className="p-8 pb-12 w-full max-h-[600px] overflow-y-auto" style={canvasBgStyles[canvasMode]}>
+              <div className={`p-8 pb-12 w-full max-h-[600px] overflow-y-auto canvas-mode-${canvasMode}`} data-canvas-mode={canvasMode}>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-6 max-w-5xl mx-auto">
-                  {icons.map((icon: any) => (
+                  {icons.map((icon: ExtractedIcon) => (
                     <div key={icon.id} className="group relative flex flex-col items-center gap-3">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-white dark:bg-[#0A0A0A] rounded-xl flex items-center justify-center border border-border/30 shadow-sm transition-all overflow-hidden relative hover-glow-premium">
                         {icon.name.includes("_GEN_") && <div className="absolute top-1 right-1 px-1 py-0.5 bg-primary/20 text-[6px] font-black text-primary rounded-[2px] uppercase tracking-wider z-20">AI</div>}
@@ -191,9 +181,9 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
             className="w-full bg-muted border border-border p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-foreground"
           />
           <div className="grid grid-cols-3 gap-2 mt-1">
-            <button onClick={() => options.setRemoveBackground(!options.removeBackground)} className={`flex items-center justify-center p-3 rounded-xl border transition-all ${options.removeBackground ? "bg-primary/20 border-primary text-primary" : "bg-muted border-border text-muted-foreground"}`}><Sparkles className="w-5 h-5" /></button>
-            <button onClick={() => options.setUpscale(!options.upscale)} className={`flex items-center justify-center p-3 rounded-xl border transition-all ${options.upscale ? "bg-primary/20 border-primary text-primary" : "bg-muted border-border text-muted-foreground"}`}><Maximize2 className="w-5 h-5" /></button>
-            <button onClick={() => {}} className="bg-muted border-border text-muted-foreground flex items-center justify-center p-3 rounded-xl border opacity-50"><Download className="w-5 h-5" /></button>
+            <button title="Remove background" onClick={() => options.setRemoveBackground(!options.removeBackground)} className={`flex items-center justify-center p-3 rounded-xl border transition-all ${options.removeBackground ? "bg-primary/20 border-primary text-primary" : "bg-muted border-border text-muted-foreground"}`}><Sparkles className="w-5 h-5" /></button>
+            <button title="Upscale resolution" onClick={() => options.setUpscale(!options.upscale)} className={`flex items-center justify-center p-3 rounded-xl border transition-all ${options.upscale ? "bg-primary/20 border-primary text-primary" : "bg-muted border-border text-muted-foreground"}`}><Maximize2 className="w-5 h-5" /></button>
+            <button title="Download options" onClick={() => {}} className="bg-muted border-border text-muted-foreground flex items-center justify-center p-3 rounded-xl border opacity-50"><Download className="w-5 h-5" /></button>
           </div>
         </div>
 
@@ -204,7 +194,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           </div>
           <div className="grid grid-cols-3 gap-3">
             {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
-              const locked = !canAccessStyle(tier as any, s);
+              const locked = !canAccessStyle(tier as UserTier["tier"], s);
               const active = exportStyle === s;
               return (
                 <button
@@ -229,7 +219,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
         onClick={() => inputRef.current?.click()}
         className={`relative cursor-pointer rounded-xl border-2 border-dashed p-16 text-center transition-all duration-300 ${dragOver ? "border-primary bg-primary/5 glow-cyan" : "border-border hover:border-primary/40 hover:bg-muted/30"}`}
       >
-        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { const files = e.target.files ? Array.from(e.target.files) : []; if (files.length > 0) processImages(files); }} />
+        <input ref={inputRef} type="file" accept="image/*" multiple title="Upload images" className="hidden" onChange={(e) => { const files = e.target.files ? Array.from(e.target.files) : []; if (files.length > 0) processImages(files); }} />
         <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-foreground font-semibold text-lg mb-2">Arrastra tus mockups aquí</p>
         <p className="text-muted-foreground text-sm">Detección automática en lote activada</p>

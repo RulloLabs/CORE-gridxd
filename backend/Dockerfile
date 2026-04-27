@@ -1,4 +1,4 @@
-FROM python:3.11.10-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 # Evitar la creación de archivos .pyc y habilitar el buffer de logs inmediatamente
 ENV PYTHONDONTWRITEBYTECODE=1
