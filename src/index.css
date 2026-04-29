@@ -64,11 +64,11 @@
     --primary: 186 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 270 100% 50%;
+    --secondary: 270 100% 60%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 10% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 8% 96%;
+    --muted-foreground: 220 6% 45%;
 
     --accent: 186 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -76,22 +76,34 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 90%;
-    --input: 220 10% 90%;
+    --border: 220 10% 88%;
+    --input: 220 10% 88%;
     --ring: 186 100% 50%;
 
-    --sidebar-background: 0 0% 98%;
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 8% 98%;
     --sidebar-foreground: 220 20% 4%;
     --sidebar-primary: 186 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 96%;
+    --sidebar-accent: 220 8% 96%;
     --sidebar-accent-foreground: 220 20% 4%;
-    --sidebar-border: 220 10% 90%;
+    --sidebar-border: 220 10% 88%;
     --sidebar-ring: 186 100% 50%;
 
+    --cyan: 186 100% 50%;
+    --violet: 270 100% 60%;
     --smoke: 0 0% 24%;
     --cloud: 0 0% 97%;
   }
+}
+
+.light .glow-cyan {
+  box-shadow: 0 0 24px -6px hsl(var(--cyan) / 0.4);
+}
+
+.light .hover-glow-premium:hover {
+  box-shadow: 0 0 30px -8px hsl(var(--cyan) / 0.5);
 }
 
 @layer base {
@@ -161,19 +173,22 @@
   }
 
   .canvas-mode-grid {
-    background-image: radial-gradient(circle at 2px 2px, rgba(150,150,150,0.15) 1px, transparent 0);
-    background-size: 24px 24px;
+    background-image: radial-gradient(circle at 2px 2px, rgba(128,128,128,0.15) 1px, transparent 0);
   }
 
-  .canvas-mode-white {
+  .light .canvas-mode-grid {
+    background-image: radial-gradient(circle at 2px 2px, rgba(0,0,0,0.1) 1px, transparent 0);
+  }
+
+  .light .canvas-mode-white {
     background: #ffffff;
   }
 
-  .canvas-mode-black {
+  .light .canvas-mode-black {
     background: #000000;
   }
 
-  .canvas-mode-transparent {
+  .light .canvas-mode-transparent {
     background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
