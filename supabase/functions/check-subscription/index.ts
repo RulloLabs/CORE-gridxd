@@ -9,8 +9,8 @@ const corsHeaders = {
 };
 
 const TIERS: Record<string, string> = {
-  prod_UJ5Nr6xHc88Rm5: "pro",
-  prod_UJ5OWqjvs10ZpX: "proplus",
+  prod_UAPq4WGjOqrxdg: "pro",      // Starter
+  prod_UAPq0CGWvYwiI5: "proplus",  // Pro
 };
 
 serve(async (req) => {

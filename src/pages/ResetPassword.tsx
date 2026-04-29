@@ -35,8 +35,9 @@ export default function ResetPassword() {
       if (error) throw error;
       setMessage("¡Contraseña actualizada con éxito! Redirigiendo...");
       setTimeout(() => navigate("/"), 3000);
-    } catch (err: any) {
-      setMessage("Error: " + err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage("Error: " + error.message);
     } finally {
       setLoading(false);
     }

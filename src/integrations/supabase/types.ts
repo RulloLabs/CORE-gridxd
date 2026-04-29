@@ -50,6 +50,39 @@ export type Database = {
         }
         Relationships: []
       }
+      processing_history: {
+        Row: {
+          id: string
+          user_id: string
+          project_name: string
+          icon_count: number
+          resolution: string
+          used_backend: boolean
+          thumbnail: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          project_name?: string
+          icon_count: number
+          resolution: string
+          used_backend: boolean
+          thumbnail?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          project_name?: string
+          icon_count?: number
+          resolution?: string
+          used_backend?: boolean
+          thumbnail?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

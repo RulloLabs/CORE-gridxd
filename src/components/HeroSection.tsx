@@ -20,7 +20,7 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
           />
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">
           <span className="text-gradient-cyan">GridXD</span>
         </h1>
 
@@ -33,16 +33,16 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
           De captura a assets en 5 segundos.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={onGetStarted}
-            className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-bold text-lg transition-all hover:scale-105 glow-cyan"
+            className="px-6 py-3 sm:px-8 sm:py-4 rounded-lg bg-primary text-primary-foreground font-bold text-base sm:text-lg transition-all hover:scale-105 glow-cyan"
           >
             Empezar gratis
           </button>
           <a
             href="#pricing"
-            className="px-8 py-4 rounded-lg border border-border text-foreground font-semibold text-lg transition-all hover:border-primary/50 hover:bg-muted"
+            className="px-6 py-3 sm:px-8 sm:py-4 rounded-lg border border-border text-foreground font-semibold text-base sm:text-lg transition-all hover:border-primary/50 hover:bg-muted"
           >
             Ver planes
           </a>

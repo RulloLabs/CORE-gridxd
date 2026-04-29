@@ -89,6 +89,16 @@ serve(async (req) => {
         }
 
         const tier = isActive ? (PRODUCT_TO_TIER[productId] ?? "pro") : "free";
+        const statusMap: Record<string, string> = {
+          active: "active",
+          trialing: "trialing",
+          past_due: "past_due",
+          canceled: "canceled",
+          unpaid: "past_due",
+          incomplete: "past_due",
+          incomplete_expired: "canceled",
+        };
+        const mappedStatus = statusMap[sub.status] ?? "canceled";
 
         // Upsert subscribers table
         const { error: upsertError } = await supabase
@@ -96,7 +106,7 @@ serve(async (req) => {
           .upsert({
             user_id: userId,
             plan: tier,
-            status: sub.status as any,
+            status: mappedStatus,
             stripe_customer_id: customerId,
             stripe_subscription_id: sub.id,
             current_period_end: new Date(sub.current_period_end * 1000).toISOString(),

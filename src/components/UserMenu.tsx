@@ -32,8 +32,9 @@ const UserMenu = () => {
       if (url) {
         window.location.href = url;
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error al abrir el portal de facturación");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Error al abrir el portal de facturación");
     } finally {
       setIsPortalLoading(false);
     }

@@ -34,8 +34,9 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
         window.open(url, "_blank");
         onClose();
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error al crear sesión de pago");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Error al crear sesión de pago");
     } finally {
       setLoading(false);
     }
@@ -58,6 +59,7 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
           <div className="relative p-6 pb-0">
             <button
               onClick={onClose}
+              title="Cerrar"
               className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
               <X className="w-4 h-4" />

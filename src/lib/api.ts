@@ -153,7 +153,7 @@ FAIL CONDITIONS (DO NOT DO):
     throw new Error(errorData.detail || `Error ${response.status}`);
   }
 
-  const result = await response.json();
+  const result = (await response.json()) as ProcessedResult;
   
   // Prepend API_BASE_URL to absolute paths returned by the backend
   if (result.zipUrl && result.zipUrl.startsWith("/")) {
@@ -161,7 +161,7 @@ FAIL CONDITIONS (DO NOT DO):
   }
   
   if (result.images) {
-    result.images = result.images.map((img: ProcessedResult["images"][0]) => ({
+    result.images = result.images.map((img) => ({
       ...img,
       url: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
     }));
@@ -242,11 +242,11 @@ export async function extractStyleFromBackend(file: File): Promise<VisualStyle |
     console.log("Style extraction data received:", data);
     
     // Support both {style: {...}} and raw style object
-    const style = data?.style || data;
+    const style = (data?.style || data) as VisualStyle | null;
     
     // Validate that it looks like a VisualStyle
     if (style && typeof style === 'object' && 'stroke_width' in style) {
-      return style as VisualStyle;
+      return style;
     }
     
     console.error("Invalid style format received:", data);
@@ -281,8 +281,8 @@ export async function generateIconSVG(
       return null;
     }
 
-    const data = await response.json();
-    return (data?.svg as string) || (typeof data === 'string' ? data : null);
+    const data = await response.json() as { svg?: string } | string;
+    return typeof data === 'string' ? data : (data?.svg ?? null);
   } catch (err) {
     console.error("Icon generation error:", err);
     return null;

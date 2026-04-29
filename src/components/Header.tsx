@@ -14,11 +14,12 @@ const Header = () => {
   const [isSoundOn, setIsSoundOn] = useState(true);
 
   useEffect(() => {
-    // Sync theme with document
     if (isDark) {
       document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
     } else {
       document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
     }
   }, [isDark]);
 

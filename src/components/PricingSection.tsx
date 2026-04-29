@@ -81,8 +81,9 @@ const PricingSection = () => {
         if (url) {
           window.location.href = url;
         }
-      } catch (err: any) {
-        toast.error(err.message || "Error al abrir portal de suscripción");
+      } catch (err: unknown) {
+        const error = err as Error;
+        toast.error(error.message || "Error al abrir portal de suscripción");
       } finally {
         setLoadingTier(null);
       }
@@ -98,8 +99,9 @@ const PricingSection = () => {
       if (url) {
         window.location.href = url;
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error al crear sesión de pago");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Error al crear sesión de pago");
     } finally {
       setLoadingTier(null);
     }
@@ -120,11 +122,11 @@ const PricingSection = () => {
           Cada minuto recortando iconos es un minuto que no estás diseñando
         </p>
 
-        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex-shrink-0 w-[85vw] md:w-full snap-center rounded-[2.5rem] p-8 border transition-all duration-300 ${
+              className={`relative flex-shrink-0 w-[90vw] max-w-sm md:w-full snap-center rounded-[2rem] p-6 md:p-8 border transition-all duration-300 ${
                 plan.highlighted
                   ? "bg-card border-primary glow-cyan"
                   : "bg-card border-border hover:border-muted-foreground/30 shadow-xl"

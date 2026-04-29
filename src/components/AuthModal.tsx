@@ -50,8 +50,9 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
         if (error) throw error;
         onClose();
       }
-    } catch (err: any) {
-      setMessage(err.message || "Error de autenticación");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage(error.message || "Error de autenticación");
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,11 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-sm rounded-xl border border-border bg-card p-8">
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <button 
+          onClick={onClose} 
+          title="Cerrar"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+        >
           <X className="w-5 h-5" />
         </button>
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { authService } from "@/api/authService";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tier, setTier] = useState<SubscriptionTier>("free");
   const [subscribed, setSubscribed] = useState(false);
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     try {
       const data = await authService.checkSubscription();
       setSubscribed(data.subscribed);
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSubscribed(false);
       setTier("free");
     }
-  };
+  }, []);
 
   useEffect(() => {
     const subscription = authService.onAuthStateChange(

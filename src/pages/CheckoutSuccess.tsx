@@ -14,7 +14,7 @@ const CheckoutSuccess = () => {
       setChecking(false);
     };
     refresh();
-  }, []);
+  }, [checkSubscription]);
 
   useEffect(() => {
     if (!checking) {

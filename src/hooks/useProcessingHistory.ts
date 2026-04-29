@@ -43,7 +43,7 @@ export function useProcessingHistory() {
     }
     setLoading(true);
     try {
-      const { data, error } = await (supabase.from("processing_history" as any) as any)
+      const { data, error } = await supabase.from("processing_history")
         .select("id, project_name, icon_count, resolution, used_backend, thumbnail, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -88,7 +88,7 @@ export function useProcessingHistory() {
       }
 
       try {
-        const { error } = await (supabase.from("processing_history" as any) as any).insert({
+        const { error } = await supabase.from("processing_history").insert({
           user_id: user.id,
           project_name: entry.project_name || "Sin nombre",
           icon_count: entry.icon_count,
@@ -110,7 +110,7 @@ export function useProcessingHistory() {
   const deleteEntry = useCallback(async (id: string) => {
     setHistory((prev) => prev.filter((e) => e.id !== id));
     try {
-      await (supabase.from("processing_history" as any) as any).delete().eq("id", id);
+      await supabase.from("processing_history").delete().eq("id", id);
     } catch {
       // revert on failure
       fetchHistory();

@@ -90,6 +90,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
               ref={inputRef}
               type="file" 
               accept="image/*" 
+              title="Subir logotipo"
               className="hidden" 
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -138,7 +139,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
             <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground shrink-0">Preview Estilo:</span>
             <div className="flex gap-2">
               {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
-                const locked = !canAccessStyle(tier as any, s);
+                const locked = !canAccessStyle(tier as "free" | "pro" | "proplus", s);
                 const active = generator.activeStyle === s;
                 return (
                   <button
@@ -182,16 +183,18 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                     {previewSvg ? (
                       <div 
                         className="w-full h-full transition-transform group-hover:scale-110"
-                        style={{ color: primaryColor }}
+                        ref={(el) => { if (el) el.style.color = `${primaryColor}`; }}
                         dangerouslySetInnerHTML={{ __html: previewSvg }}
                       />
                     ) : (
                       <icon.icon 
                         className="w-full h-full transition-transform group-hover:scale-110" 
-                        style={{ 
-                          color: primaryColor,
-                          strokeWidth: generator.visualStyle?.stroke_width || 2
-                        }} 
+                        ref={(el: SVGSVGElement | HTMLElement | null) => { 
+                          if (el && el.style) {
+                            el.style.color = `${primaryColor}`;
+                            el.style.strokeWidth = `${generator.visualStyle?.stroke_width || 2}`;
+                          }
+                        }}
                       />
                     )}
                   </div>
@@ -216,7 +219,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
             <div className="flex flex-col sm:flex-row gap-3">
               {tier === "proplus" && (
                 <button 
-                  onClick={() => (generator as any).downloadPack(projectName, generator.activeStyle, true)}
+                  onClick={() => generator.downloadPack(projectName, generator.activeStyle, true)}
                   className="px-6 py-3 border border-primary text-primary rounded-xl font-bold hover:bg-primary/5 transition-all flex items-center gap-2"
                 >
                   Pack Completo (3 estilos)

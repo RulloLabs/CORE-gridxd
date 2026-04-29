@@ -49,48 +49,40 @@ const UploadSection = () => {
         </p>
 
         {/* MODO SELECTOR UI */}
-        <div className="flex justify-center mb-10">
-          <div className="bg-muted/80 p-2 rounded-2xl flex items-center gap-2 border border-border shadow-lg">
+        <div className="flex justify-center mb-6 sm:mb-10">
+          <div className="bg-muted/80 p-1.5 sm:p-2 rounded-2xl flex items-center gap-1 sm:gap-2 border border-border shadow-lg">
             <button
               onClick={() => setActiveMode("extract")}
               title="Modo Extraer (Cortar iconos)"
-              className={`p-4 rounded-xl transition-all ${
-                activeMode === "extract"
-                  ? "bg-card text-primary shadow-md border border-border scale-110"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-              }`}
+              className={`p-3 sm:p-4 rounded-xl transition-all ${activeMode === "extract" ? "bg-card text-primary shadow-md border border-border scale-110" : "text-muted-foreground hover:text-foreground hover:bg-card/50"}`}
             >
-              <Upload className="w-8 h-8" />
+              <Upload className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
-            <div className="w-px h-8 bg-border/50" />
+            <div className="w-px h-6 sm:h-8 bg-border/50" />
             <button
               onClick={() => setActiveMode("generate")}
               title="Modo Crear Sistema (IA)"
-              className={`p-4 rounded-xl transition-all ${
-                activeMode === "generate"
-                  ? "bg-primary text-primary-foreground shadow-lg glow-cyan scale-110"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-              }`}
+              className={`p-3 sm:p-4 rounded-xl transition-all ${activeMode === "generate" ? "bg-primary text-primary-foreground shadow-lg glow-cyan scale-110" : "text-muted-foreground hover:text-foreground hover:bg-card/50"}`}
             >
-              <Sparkles className="w-8 h-8" />
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
           </div>
         </div>
 
         {/* UPSELL NOTIFICATION */}
         {showUpsell && processor.state === "done" && (
-          <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-6 text-center animate-in fade-in slide-in-from-top-4">
-            <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-            <p className="text-foreground font-bold text-lg mb-2">
+          <div className="mb-4 sm:mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-6 text-center animate-in fade-in slide-in-from-top-4">
+            <Sparkles className="w-6 sm:w-8 h-6 sm:h-8 text-primary mx-auto mb-2 sm:mb-3" />
+            <p className="text-foreground font-bold text-base sm:text-lg mb-1.5 sm:mb-2">
               Has generado {processor.icons.length} iconos listos.
             </p>
-            <p className="text-muted-foreground text-sm mb-4">
+            <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
               Mejora la precisión y descarga en HD con detección avanzada (OpenCV) y eliminación de fondo real.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
               <button
                 onClick={() => window.location.hash = "#pricing"}
-                className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:scale-105 transition-all glow-cyan"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-bold hover:scale-105 transition-all glow-cyan"
               >
                 Activar Pro — 9€/mes
               </button>
@@ -99,7 +91,7 @@ const UploadSection = () => {
                   setShowUpsell(false);
                   handleDownloadZip();
                 }}
-                className="px-6 py-3 rounded-lg border border-border text-muted-foreground font-semibold hover:bg-muted/30 transition-colors"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-border text-muted-foreground text-xs sm:text-sm font-semibold hover:bg-muted/30 transition-colors"
               >
                 Descargar versión básica
               </button>
