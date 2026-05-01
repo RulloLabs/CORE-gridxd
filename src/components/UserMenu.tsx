@@ -4,10 +4,12 @@ import { LogOut, User, Settings, CreditCard, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { stripeService } from "@/api/stripeService";
 import { toast } from "sonner";
+import ProfileModal from "./ProfileModal";
 
 const UserMenu = () => {
   const { user, plan } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,8 +48,12 @@ const UserMenu = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1.5 pr-3 rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-300 border border-border/40"
       >
-        <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xs shadow-lg shadow-primary/20">
-          {initials}
+        <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xs shadow-lg shadow-primary/20 overflow-hidden">
+          {user.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            initials
+          )}
         </div>
         <div className="flex flex-col items-start leading-none hidden sm:flex">
           <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{plan}</span>
@@ -63,7 +69,10 @@ const UserMenu = () => {
             <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
           </div>
 
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left">
+          <button 
+            onClick={() => { setProfileOpen(true); setIsOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
+          >
             <User className="w-4 h-4" /> Mi Perfil
           </button>
           
@@ -89,6 +98,7 @@ const UserMenu = () => {
           </button>
         </div>
       )}
+      {profileOpen && <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />}
     </div>
   );
 };
