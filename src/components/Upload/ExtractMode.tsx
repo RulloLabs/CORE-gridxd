@@ -204,66 +204,66 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
         </span>
       </div>
 
-      <div className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8 glass-card p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col gap-6">
-          <div className="space-y-2">
-            <label htmlFor="project-name-input" className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground ml-1">
-              Nombre del Proyecto
-            </label>
+      <div className="mb-16 grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+        {/* Decorative background for the whole panel */}
+        <div className="absolute -inset-4 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 blur-3xl opacity-50 -z-10" />
+
+        <div className="lg:col-span-4 flex flex-col gap-6 glass-card p-10 rounded-[2.5rem] border-white/20 shadow-2xl">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1.5 h-6 bg-primary rounded-full" />
+              <label htmlFor="project-name-input" className="text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground">
+                Proyecto
+              </label>
+            </div>
             <input
               id="project-name-input"
               type="text"
               placeholder="Ej: Dashboard_Icons"
               value={options.projectName}
               onChange={(e) => options.setProjectName(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-foreground transition-all focus:bg-white/10"
+              className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl focus:ring-2 focus:ring-primary outline-none font-black text-foreground transition-all focus:bg-white/10 text-lg placeholder:opacity-30"
             />
           </div>
           
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground ml-1">Configuración IA</p>
-            <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1.5 h-6 bg-primary rounded-full opacity-50" />
+              <p className="text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground">IA Engine</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <button 
                 onClick={() => options.setRemoveBackground(!options.removeBackground)} 
-                title="Eliminar Fondo"
-                aria-label="Toggle Remove Background"
-                aria-pressed={options.removeBackground}
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${options.removeBackground ? "bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10" : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10"}`}
+                className={`flex flex-col items-center justify-center gap-3 p-6 rounded-3xl border-2 transition-all duration-500 ${options.removeBackground ? "bg-primary/20 border-primary text-primary shadow-2xl shadow-primary/20 scale-105" : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10"}`}
               >
-                <Sparkles className="w-5 h-5" />
-                <span className="text-[8px] font-black uppercase">BG REMOVE</span>
+                <Sparkles className={`w-6 h-6 ${options.removeBackground ? "animate-pulse" : ""}`} />
+                <span className="text-[9px] font-black uppercase tracking-widest">Sin Fondo</span>
               </button>
               <button 
                 onClick={() => options.setUpscale(!options.upscale)} 
-                title="Aumentar Resolución (Upscale)"
-                aria-label="Toggle Upscale"
-                aria-pressed={options.upscale}
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${options.upscale ? "bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10" : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10"}`}
+                className={`flex flex-col items-center justify-center gap-3 p-6 rounded-3xl border-2 transition-all duration-500 ${options.upscale ? "bg-primary/20 border-primary text-primary shadow-2xl shadow-primary/20 scale-105" : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10"}`}
               >
-                <Maximize2 className="w-5 h-5" />
-                <span className="text-[8px] font-black uppercase">2K UPSCALE</span>
-              </button>
-              <button 
-                disabled
-                title="Próximamente"
-                className="bg-white/5 border-white/5 text-muted-foreground/30 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border cursor-not-allowed"
-              >
-                <Download className="w-5 h-5" />
-                <span className="text-[8px] font-black uppercase">BATCH ZIP</span>
+                <Maximize2 className={`w-6 h-6 ${options.upscale ? "animate-pulse" : ""}`} />
+                <span className="text-[9px] font-black uppercase tracking-widest">Ultra 2K</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-2 relative z-10 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Estilo de Exportación (Motor SVG)</span>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full">{plan}</span>
+        <div className="lg:col-span-8 flex flex-col gap-6 glass-card p-10 rounded-[2.5rem] border-white/20 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
+            <div className="w-40 h-40 bg-primary rounded-full blur-[80px]" />
+          </div>
+
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-primary rounded-full" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-black text-muted-foreground">Motor de Exportación SVG</span>
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.3em] bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 rounded-full backdrop-blur-md shadow-lg">{plan} access</span>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-6 h-full">
             {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
               const locked = !canAccessStyle(plan as any, s);
               const active = exportStyle === s;
@@ -271,28 +271,31 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                 <button
                   key={s}
                   onClick={() => locked ? onUpgrade(s) : setExportStyle(s)}
-                  aria-pressed={active && !locked}
-                  className={`relative group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all ${
+                  className={`relative group flex flex-col items-center justify-center gap-5 p-8 rounded-[2rem] border-2 transition-all duration-700 ${
                     locked 
-                      ? "bg-black/20 border-white/5 opacity-40 grayscale cursor-not-allowed" 
+                      ? "bg-black/40 border-white/5 opacity-40 grayscale cursor-not-allowed" 
                       : active 
-                        ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" 
+                        ? "border-primary bg-primary/10 shadow-2xl shadow-primary/20 scale-[1.02]" 
                         : "bg-white/5 border-white/10 hover:border-primary/40 hover:bg-white/10"
                   }`}
                 >
-                  <span className={`text-4xl transition-transform group-hover:scale-110 ${active && !locked ? "drop-shadow-[0_0_15px_hsl(var(--cyan))]" : ""}`}>
+                  <span className={`text-6xl transition-all duration-700 ${active && !locked ? "drop-shadow-[0_0_25px_hsl(var(--cyan))] scale-110" : "group-hover:scale-110 group-hover:rotate-3"}`}>
                     {STYLE_META[s].icon}
                   </span>
                   <div className="text-center">
-                    <span className={`block text-[10px] font-black uppercase tracking-widest ${active && !locked ? "text-primary" : "text-foreground"}`}>
+                    <span className={`block text-xs font-black uppercase tracking-[0.2em] mb-1 ${active && !locked ? "text-primary" : "text-foreground"}`}>
                       {STYLE_META[s].label}
                     </span>
-                    <span className="text-[8px] text-muted-foreground font-bold">{STYLE_META[s].description.split(' ')[0]}</span>
+                    <span className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-widest">{STYLE_META[s].description.split(' ')[0]} mode</span>
                   </div>
                   {locked && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
-                      <Lock className="w-5 h-5 text-white/50" />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[1.9rem] flex flex-col items-center justify-center gap-2">
+                      <Lock className="w-8 h-8 text-white/50" />
+                      <span className="text-[8px] font-black text-white/50 uppercase tracking-widest">Pro Only</span>
                     </div>
+                  )}
+                  {active && !locked && (
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary))]" />
                   )}
                 </button>
               );
@@ -306,8 +309,14 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); const files = Array.from(e.dataTransfer.files); if (files.length > 0) processImages(files); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
-        className={`premium-dropzone ${dragOver ? "premium-dropzone-active" : "premium-dropzone-idle"}`}
+        className={`relative cursor-pointer rounded-[3rem] border-4 border-dashed p-20 text-center transition-all duration-700 group overflow-hidden ${
+          dragOver 
+            ? "border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20" 
+            : "border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10 shadow-xl"
+        }`}
       >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+        
         <input 
           ref={inputRef} 
           type="file" 
@@ -318,9 +327,13 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           aria-label="Subir imágenes"
           onChange={(e) => { const files = e.target.files ? Array.from(e.target.files) : []; if (files.length > 0) processImages(files); }} 
         />
-        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
-        <p className="text-foreground font-semibold text-lg mb-2">Arrastra tus mockups aquí</p>
-        <p className="text-muted-foreground text-sm">Detección automática en lote activada</p>
+        <div className="relative z-10">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform duration-500 ring-4 ring-primary/5">
+            <Upload className={`w-10 h-10 ${dragOver ? "text-primary animate-bounce" : "text-muted-foreground group-hover:text-primary transition-colors"}`} aria-hidden="true" />
+          </div>
+          <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight group-hover:text-primary transition-colors">Arrastra tus mockups aquí</h3>
+          <p className="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em] opacity-60">Detección automática en lote activada • PNG HD • SVG</p>
+        </div>
       </label>
     </>
   );

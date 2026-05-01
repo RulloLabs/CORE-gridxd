@@ -126,16 +126,16 @@ const PricingSection = () => {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-full snap-center rounded-2xl lg:rounded-[2rem] p-5 sm:p-6 lg:p-8 border transition-all duration-300 ${
+              className={`relative flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-full snap-center rounded-[2.5rem] p-8 sm:p-10 border transition-all duration-500 hover:-translate-y-2 ${
                 plan.highlighted
-                  ? "bg-card border-primary glow-cyan"
-                  : "bg-card border-border hover:border-muted-foreground/30 shadow-xl"
-              } ${isCurrentPlan(plan.planKey) ? "ring-2 ring-primary" : ""}`}
+                  ? "bg-gradient-to-br from-primary/10 via-card to-background border-primary/50 shadow-2xl shadow-primary/20 scale-105 z-10"
+                  : "glass-card border-white/10 hover:border-white/20 shadow-xl"
+              } ${isCurrentPlan(plan.planKey) ? "ring-2 ring-primary ring-offset-4 ring-offset-background" : ""}`}
             >
               {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 sm:px-4 sm:py-1 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold rounded-full flex items-center gap-1 shadow-lg whitespace-nowrap">
-                  <Sparkles className="w-3 h-3" />
-                  POPULAR
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1 bg-primary text-primary-foreground text-[10px] sm:text-xs font-black rounded-full flex items-center gap-1.5 shadow-xl shadow-primary/20 whitespace-nowrap">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  RECOMENDADO
                 </div>
               )}
 
@@ -145,14 +145,14 @@ const PricingSection = () => {
                 </div>
               )}
 
-              <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl sm:text-5xl font-black">{plan.price}</span>
+              <h3 className="text-xl sm:text-2xl font-black mb-1 sm:mb-2 text-foreground tracking-tight">{plan.name}</h3>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className="text-5xl sm:text-6xl font-black tracking-tighter text-foreground">{plan.price}</span>
                 {plan.period && (
-                  <span className="text-muted-foreground font-medium text-sm sm:text-base">{plan.period}</span>
+                  <span className="text-muted-foreground font-black text-sm uppercase tracking-widest">{plan.period}</span>
                 )}
               </div>
-              <p className="text-muted-foreground text-xs sm:text-sm mb-6 sm:mb-8 leading-relaxed">
+              <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
                 {plan.description}
               </p>
 
@@ -170,11 +170,11 @@ const PricingSection = () => {
               <button
                 onClick={() => handleActivate(plan.planKey)}
                 disabled={isCurrentPlan(plan.planKey) || (loadingPlan !== null && loadingPlan === plan.planKey)}
-                className={`w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all shadow-lg ${
+                className={`w-full py-4 rounded-2xl font-black text-sm transition-all shadow-xl ${
                   plan.highlighted
-                    ? "bg-primary text-primary-foreground hover:scale-105 active:scale-95 glow-cyan"
-                    : "bg-muted text-foreground hover:bg-muted/80 active:scale-95"
-                } disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100`}
+                    ? "bg-primary text-primary-foreground hover:scale-105 active:scale-95 shadow-primary/20 glow-cyan"
+                    : "bg-white/5 text-foreground hover:bg-white/10 active:scale-95 border border-white/10"
+                } disabled:opacity-50 disabled:hover:scale-100 disabled:active:scale-100 uppercase tracking-widest`}
               >
                 {(loadingPlan !== null && loadingPlan === plan.planKey)
                   ? "Cargando..."

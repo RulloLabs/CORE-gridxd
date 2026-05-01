@@ -49,22 +49,40 @@ const UploadSection = () => {
         </p>
 
         {/* MODO SELECTOR UI */}
-        <div className="flex justify-center mb-6 sm:mb-10">
-          <div className="bg-muted/80 p-1.5 sm:p-2 rounded-2xl flex items-center gap-1 sm:gap-2 border border-border shadow-lg">
+        <div className="flex justify-center mb-10 sm:mb-16">
+          <div className="bg-white/5 p-2 rounded-[2rem] flex items-center gap-2 border border-white/10 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            
             <button
-              onClick={() => setActiveMode("extract")}
-              title="Modo Extraer (Cortar iconos)"
-              className={`p-3 sm:p-4 rounded-xl transition-all ${activeMode === "extract" ? "bg-card text-primary shadow-md border border-border scale-110" : "text-muted-foreground hover:text-foreground hover:bg-card/50"}`}
+              onClick={() => setActiveMode("extract") }
+              className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
+                activeMode === "extract" 
+                  ? "bg-white/10 text-white shadow-xl ring-1 ring-white/20" 
+                  : "text-muted-foreground hover:text-white hover:bg-white/5"
+              }`}
             >
-              <Upload className="w-6 h-6 sm:w-8 sm:h-8" />
+              <Upload className={`w-5 h-5 ${activeMode === "extract" ? "animate-bounce" : ""}`} />
+              <div className="text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Modo Manual</p>
+                <p className="text-sm font-bold">Extraer de Mockup</p>
+              </div>
             </button>
-            <div className="w-px h-6 sm:h-8 bg-border/50" />
+
+            <div className="w-px h-8 bg-white/10 mx-1" />
+
             <button
               onClick={() => setActiveMode("generate")}
-              title="Modo Crear Sistema (IA)"
-              className={`p-3 sm:p-4 rounded-xl transition-all ${activeMode === "generate" ? "bg-primary text-primary-foreground shadow-lg glow-cyan scale-110" : "text-muted-foreground hover:text-foreground hover:bg-card/50"}`}
+              className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
+                activeMode === "generate" 
+                  ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/20 glow-cyan ring-1 ring-primary/50" 
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              }`}
             >
-              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
+              <Sparkles className={`w-5 h-5 ${activeMode === "generate" ? "animate-pulse" : ""}`} />
+              <div className="text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Modo IA</p>
+                <p className="text-sm font-bold">Generar Sistema</p>
+              </div>
             </button>
           </div>
         </div>
