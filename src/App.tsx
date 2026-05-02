@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 
 // ─── Lazy-loaded routes (Admin, legal pages, checkout not in initial bundle) ──
@@ -67,6 +68,7 @@ const App = () => (
               </Suspense>
             </BrowserRouter>
           </ErrorBoundary>
+          <Analytics />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
