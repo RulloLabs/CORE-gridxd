@@ -309,14 +309,12 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); const files = Array.from(e.dataTransfer.files); if (files.length > 0) processImages(files); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
-        className={`relative cursor-pointer rounded-[3rem] border-4 border-dashed p-20 text-center transition-all duration-700 group overflow-hidden ${
+        className={`relative cursor-pointer rounded-[2rem] border-2 border-dashed p-10 text-center transition-all duration-500 group overflow-hidden ${
           dragOver 
-            ? "border-primary bg-primary/10 scale-[1.02] shadow-2xl shadow-primary/20" 
-            : "border-white/10 bg-white/5 hover:border-primary/40 hover:bg-white/10 shadow-xl"
+            ? "border-primary bg-primary/10" 
+            : "border-white/10 bg-white/5 hover:border-primary/20"
         }`}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        
         <input 
           ref={inputRef} 
           type="file" 
@@ -327,12 +325,9 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           aria-label="Subir imágenes"
           onChange={(e) => { const files = e.target.files ? Array.from(e.target.files) : []; if (files.length > 0) processImages(files); }} 
         />
-        <div className="relative z-10">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform duration-500 ring-4 ring-primary/5">
-            <Upload className={`w-10 h-10 ${dragOver ? "text-primary animate-bounce" : "text-muted-foreground group-hover:text-primary transition-colors"}`} aria-hidden="true" />
-          </div>
-          <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight group-hover:text-primary transition-colors">Arrastra tus mockups aquí</h3>
-          <p className="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em] opacity-60">Detección automática en lote activada • PNG HD • SVG</p>
+        <div className="relative z-10 flex items-center justify-center gap-4">
+          <Upload className={`w-6 h-6 ${dragOver ? "text-primary animate-bounce" : "text-muted-foreground group-hover:text-primary transition-colors"}`} aria-hidden="true" />
+          <p className="text-foreground font-bold tracking-tight">Haz clic o arrastra más archivos para procesar en lote</p>
         </div>
       </label>
     </>

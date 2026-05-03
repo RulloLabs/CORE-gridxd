@@ -122,7 +122,7 @@ const PricingSection = () => {
           Cada minuto recortando iconos es un minuto que no estás diseñando
         </p>
 
-        <div className="flex md:grid md:grid-cols-3 gap-4 lg:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 px-4 md:px-0">
           {plans.map((plan) => (
             <div
               key={plan.name}

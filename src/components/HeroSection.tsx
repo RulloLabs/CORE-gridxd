@@ -2,14 +2,11 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
       {/* Background grid pattern */}
-      <div className="absolute inset-0 opacity-[0.04]" style={{
-        backgroundImage: `linear-gradient(hsl(var(--cyan)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--cyan)) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px'
-      }} />
+      <div className="absolute inset-0 opacity-[0.04] hero-bg-grid" />
 
-      {/* Glow orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-cyan/5 blur-[120px] animate-pulse-glow" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-violet/5 blur-[120px] animate-pulse-glow" style={{ animationDelay: '1s' }} />
+      {/* Glow orbs - Softer for light mode */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-[120px] animate-pulse-glow opacity-50" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-secondary/5 blur-[120px] animate-pulse-glow opacity-50 [animation-delay:1s]" />
 
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         <div className="mb-8 flex justify-center">

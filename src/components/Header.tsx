@@ -27,17 +27,17 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
       {/* Brand — horizontal lockup: logo + wordmark */}
-      <div className="flex items-center gap-3">
+      <a href="#hero" className="flex items-center gap-3 group">
         <img
           src="/LogoMainGRIDXD.png"
           alt="GridXD"
-          className="w-10 h-10 object-contain"
+          className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
         />
         <div className="flex flex-col leading-none">
-          <span className="text-sm font-black tracking-tight text-foreground uppercase">GridXD</span>
+          <span className="text-sm font-black tracking-tight text-foreground uppercase group-hover:text-primary transition-colors">GridXD</span>
           <span className="text-[10px] font-medium text-muted-foreground tracking-wider hidden sm:block">Design Intelligence</span>
         </div>
-      </div>
+      </a>
 
       {/* Action area */}
       <div className="flex items-center gap-2 sm:gap-4 p-1 rounded-2xl bg-background/40 backdrop-blur-xl border border-border/40 shadow-xl overflow-visible animate-in fade-in slide-in-from-top-4 duration-700">

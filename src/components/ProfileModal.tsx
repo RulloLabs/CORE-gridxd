@@ -20,7 +20,7 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
     if (user) {
       setFullName(user.user_metadata?.full_name || "");
       setAvatarUrl(user.user_metadata?.avatar_url || null);
-      
+
       // Fetch profile from database to be sure
       authService.getProfile(user.id).then(profile => {
         if (profile) {
@@ -42,7 +42,7 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
         full_name: fullName,
         avatar_url: avatarUrl || undefined,
       });
-      
+
       // Update local metadata too
       await authService.updateUserMetadata({
         full_name: fullName,
@@ -81,8 +81,8 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
           <div className="w-40 h-40 bg-primary rounded-full blur-[80px]" />
         </div>
 
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           title="Cerrar modal"
           className="absolute top-8 right-8 p-2 rounded-full hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground hover:rotate-90"
         >
@@ -108,9 +108,10 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
                 </div>
               )}
             </div>
-            <label className="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 cursor-pointer hover:scale-110 transition-all active:scale-95">
+            <label htmlFor="avatar-upload" className="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 cursor-pointer hover:scale-110 transition-all active:scale-95" title="Subir avatar">
+              <span className="sr-only">Subir avatar</span>
               <Camera className="w-4 h-4" />
-              <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={uploading} />
+              <input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={uploading} title="Subir avatar" placeholder="Subir avatar" aria-label="Subir avatar" />
             </label>
           </div>
         </div>

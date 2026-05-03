@@ -128,6 +128,7 @@ const UploadSection = () => {
         ) : (
           <GenerateMode 
             projectName={processor.options.projectName}
+            setProjectName={processor.options.setProjectName}
             onUpgrade={(s) => setUpgradeStyle(s)}
           />
         )}

@@ -9,13 +9,22 @@ import { useAuth } from "@/contexts/AuthContext";
 interface GenerateModeProps {
   onUpgrade: (style: SvgStyle) => void;
   projectName: string;
+  setProjectName?: (name: string) => void;
 }
 
-export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
+export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: GenerateModeProps) => {
   const { plan } = useAuth();
   const generator = useIconGenerator();
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (file: File) => {
+    if (!projectName && setProjectName) {
+      const defaultName = file.name.split('.').slice(0, -1).join('.') || file.name;
+      setProjectName(defaultName.replace(/[^a-zA-Z0-9_-]/g, '_'));
+    }
+    generator.generateSystem(file, generator.activeStyle, generator.packSize);
+  };
 
   return (
     <div className="relative glass-card rounded-[3rem] p-8 md:p-16 text-center overflow-hidden">
@@ -45,7 +54,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                     key={size}
                     onClick={() => generator.setPackSize(size)}
                     title={`Pack de ${size} iconos`}
-                    aria-pressed={generator.packSize === size ? "true" : "false"}
+                    aria-pressed={generator.packSize === size}
                     className={`flex-1 py-3 text-xs rounded-xl font-black transition-all duration-300 ${
                       generator.packSize === size 
                         ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30" 
@@ -66,7 +75,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                     key={v}
                     onClick={() => generator.setActiveStyle(v)}
                     title={`Estilo: ${STYLE_META[v].label}`}
-                    aria-pressed={generator.activeStyle === v ? "true" : "false"}
+                    aria-pressed={generator.activeStyle === v}
                     className={`flex-1 py-3 text-xs rounded-xl font-black capitalize transition-all duration-300 ${
                       generator.activeStyle === v 
                         ? "bg-secondary text-secondary-foreground shadow-xl shadow-secondary/30" 
@@ -80,8 +89,21 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
             </div>
           </div>
 
+          <div className="max-w-md mx-auto mb-12">
+            <div className="space-y-3">
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">3. Nombre del Proyecto (Opcional)</p>
+              <input
+                type="text"
+                placeholder="Ej: MyBrand_Icons"
+                value={projectName}
+                onChange={(e) => setProjectName?.(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-foreground transition-all focus:bg-white/10 text-center placeholder:opacity-30"
+              />
+            </div>
+          </div>
+
           <div className="max-w-lg mx-auto">
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-4">3. Referencia Visual</p>
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-4">4. Referencia Visual</p>
             <label 
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
@@ -89,7 +111,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                 e.preventDefault();
                 setDragOver(false);
                 const file = e.dataTransfer.files[0];
-                if (file) generator.generateSystem(file, generator.activeStyle, generator.packSize);
+                if (file) handleFile(file);
               }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
               className={`premium-dropzone group ${dragOver ? "premium-dropzone-active" : "premium-dropzone-idle border-white/10 bg-white/[0.02]"}`}
@@ -103,7 +125,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                 aria-label="Subir logo"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) generator.generateSystem(file, generator.activeStyle, generator.packSize);
+                  if (file) handleFile(file);
                 }} 
               />
               <div className="relative w-16 h-16 mx-auto mb-4 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-colors">
@@ -176,7 +198,7 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
                     key={s}
                     onClick={() => locked ? onUpgrade(s) : generator.setActiveStyle(s)}
                     title={locked ? "Requiere plan PRO" : STYLE_META[s].description}
-                    aria-pressed={active ? "true" : "false"}
+                    aria-pressed={active}
                     className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-xs font-black transition-all duration-300 ${
                       locked
                         ? "border-white/5 text-muted-foreground opacity-40 cursor-not-allowed bg-transparent"
@@ -262,6 +284,15 @@ export const GenerateMode = ({ onUpgrade, projectName }: GenerateModeProps) => {
               <p className="text-muted-foreground max-w-md">
                 Estás exportando el pack <span className="text-primary font-black uppercase tracking-widest">{generator.activeStyle}</span> optimizado para desarrollo.
               </p>
+              <div className="pt-2">
+                <input
+                  type="text"
+                  placeholder="Nombre del proyecto"
+                  value={projectName}
+                  onChange={(e) => setProjectName?.(e.target.value)}
+                  className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-foreground transition-all focus:bg-white/10 placeholder:opacity-30"
+                />
+              </div>
             </div>
             
             <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
