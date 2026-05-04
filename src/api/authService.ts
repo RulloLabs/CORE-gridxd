@@ -100,4 +100,12 @@ export const authService = {
       plan: data.plan ?? "free"
     };
   }
+  /**
+   * Listen to auth state changes
+   */
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(callback);
+    return subscription;
+  }
 };
+

@@ -18,9 +18,10 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
  */
 
 const PRODUCT_TO_PLAN: Record<string, string> = {
-  prod_UAPq4WGjOqrxdg: "pro",      // Starter en Stripe
-  prod_UAPq0CGWvYwiI5: "proplus",  // Pro en Stripe
+  prod_TPDRgnDAWN0YGl: "pro",      // Premium en Stripe
+  prod_TPFYLTuQtsdQbY: "proplus",  // Enterprise en Stripe
 };
+
 
 // ─── Allowed origins (NO wildcard) ────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
