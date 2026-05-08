@@ -12,7 +12,7 @@ export const stripeService = {
    */
   async createCheckoutSession(priceId: string): Promise<string> {
     const { data, error } = await supabase.functions.invoke("create-checkout", {
-      body: { priceId },
+      body: { priceId, returnUrl: window.location.origin },
     });
 
     if (error) {
@@ -31,7 +31,9 @@ export const stripeService = {
    * @returns The portal URL
    */
   async createPortalSession(): Promise<string> {
-    const { data, error } = await supabase.functions.invoke("customer-portal");
+    const { data, error } = await supabase.functions.invoke("customer-portal", {
+      body: { returnUrl: window.location.origin },
+    });
 
     if (error) {
       throw new Error(error.message || "Error al acceder al portal de gestión");

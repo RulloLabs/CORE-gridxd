@@ -181,11 +181,6 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
             </div>
           </div>
 
-          {visualStyle && (
-            <div className="order-1 lg:order-2">
-              <SidebarIconGenerator visualStyle={visualStyle} onIconGenerated={(svg, name) => injectGeneratedIcon(svg, name)} />
-            </div>
-          )}
         </div>
       </div>
     );

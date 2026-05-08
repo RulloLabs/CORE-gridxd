@@ -50,15 +50,15 @@ const UploadSection = () => {
 
         {/* MODO SELECTOR UI */}
         <div className="flex justify-center mb-10 sm:mb-16">
-          <div className="bg-white/5 p-2 rounded-[2rem] flex items-center gap-2 border border-white/10 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+          <div className="bg-foreground/5 p-2 rounded-[2rem] flex items-center gap-2 border border-border shadow-2xl backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             
             <button
               onClick={() => setActiveMode("extract") }
               className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
                 activeMode === "extract" 
-                  ? "bg-white/10 text-white shadow-xl ring-1 ring-white/20" 
-                  : "text-muted-foreground hover:text-white hover:bg-white/5"
+                  ? "bg-foreground/10 text-foreground shadow-xl ring-1 ring-foreground/20" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
               }`}
             >
               <Upload className={`w-5 h-5 ${activeMode === "extract" ? "animate-bounce" : ""}`} />
@@ -68,14 +68,14 @@ const UploadSection = () => {
               </div>
             </button>
 
-            <div className="w-px h-8 bg-white/10 mx-1" />
+            <div className="w-px h-8 bg-border mx-1" />
 
             <button
               onClick={() => setActiveMode("generate")}
               className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
                 activeMode === "generate" 
                   ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/20 glow-cyan ring-1 ring-primary/50" 
-                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
               }`}
             >
               <Sparkles className={`w-5 h-5 ${activeMode === "generate" ? "animate-pulse" : ""}`} />

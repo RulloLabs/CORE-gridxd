@@ -9,10 +9,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: bun install -g vercel@latest
 
       - name: Deploy to Vercel
         run: vercel --prod --yes

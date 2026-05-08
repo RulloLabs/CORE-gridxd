@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 
 interface AuthModalProps {
   open: boolean;
@@ -15,7 +15,6 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const [isReset, setIsReset] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [agreed, setAgreed] = useState(false);
 
   if (!open) return null;
@@ -23,7 +22,6 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (isReset) {
@@ -31,10 +29,10 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           redirectTo: window.location.origin + "/reset-password",
         });
         if (error) throw error;
-        setMessage("Se han enviado las instrucciones a tu email.");
+        toast.success("Se han enviado las instrucciones a tu email.");
       } else if (isSignUp) {
         if (!agreed) {
-          setMessage("Debes aceptar la política de privacidad para registrarte.");
+          toast.error("Debes aceptar la política de privacidad para registrarte.");
           setLoading(false);
           return;
         }
@@ -44,15 +42,16 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        setMessage("Revisa tu email para confirmar tu cuenta.");
+        toast.success("Revisa tu email para confirmar tu cuenta.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        toast.success("Sesión iniciada correctamente");
         onClose();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      setMessage(error.message || "Error de autenticación");
+      toast.error(error.message || "Error de autenticación");
     } finally {
       setLoading(false);
     }
@@ -78,24 +77,23 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             type="button"
             onClick={async () => {
               setLoading(true);
-              setMessage("");
               try {
                 const { data, error } = await supabase.auth.signInWithOAuth({
                   provider: "google",
                   options: {
-                    redirectTo: `${window.location.origin}/`,
+                    redirectTo: window.location.origin,
                     scopes: "email profile openid",
                   }
                 });
                 if (error) {
-                  setMessage(error.message || "Error con Google");
+                  toast.error(error.message || "Error con Google");
                 }
                 if (data?.url) {
                   window.location.href = data.url;
                 }
               } catch (err: unknown) {
                 const error = err as Error;
-                setMessage(error.message || "Error con Google");
+                toast.error(error.message || "Error con Google");
               } finally {
                 setLoading(false);
               }
@@ -174,14 +172,10 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           </button>
         </form>
 
-        {message && (
-          <p className="text-sm text-center mt-4 text-muted-foreground">{message}</p>
-        )}
-
         <div className="mt-4 flex flex-col items-center gap-2">
           {!isReset && !isSignUp && (
             <button
-              onClick={() => { setIsReset(true); setMessage(""); }}
+              onClick={() => { setIsReset(true); }}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
               ¿Olvidaste tu contraseña?
@@ -199,7 +193,6 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
               onClick={() => { 
                 if (isReset) { setIsReset(false); setIsSignUp(false); }
                 else { setIsSignUp(!isSignUp); }
-                setMessage(""); 
               }}
               className="text-primary font-semibold hover:underline"
             >
