@@ -107,7 +107,5 @@ export const authService = {
       subscribed: data.subscribed ?? false,
       plan: data.plan ?? "free"
     };
-  },
   }
 };
-
