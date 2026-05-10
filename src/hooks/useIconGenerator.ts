@@ -93,20 +93,14 @@ export function useIconGenerator() {
       setState("analyzing");
       setPackSize(size);
       
-      // 1. Extract Visual DNA with Gemini
+      // 1. Extract Visual DNA — always returns a style (fallback if backend offline)
       const style = await extractStyleFromBackend(referenceFile);
-      if (!style) {
-        throw new Error("No se pudo analizar el estilo visual.");
-      }
-      
       setVisualStyle(style);
-      await delay(1500); // Artificial delay for UX "magic"
+      await delay(1500);
 
       setState("generating");
 
-      // 2. Parallel generation in batches of 5 for 75% speed improvement
-      // Sequential: 48 icons × 400ms = ~19s minimum
-      // Parallel batches of 5: ceil(48/5) × ~2s = ~5s
+      // 2. Parallel generation in batches of 5
       const selectedIcons = CORE_ICONS.slice(0, size);
       const systemIcons: GeneratedIcon[] = new Array(selectedIcons.length);
       const BATCH_SIZE = 5;
@@ -125,14 +119,12 @@ export function useIconGenerator() {
             systemIcons[globalIdx] = { ...baseIcon, svgContent: result.value || undefined };
           } else {
             logger.error(`Error generating ${baseIcon.id}:`, result.reason);
-            systemIcons[globalIdx] = baseIcon; // Fallback to Lucide
+            systemIcons[globalIdx] = baseIcon; // Fallback to Lucide icon
           }
         });
 
-        // Update UI after each batch so the user sees icons appearing in groups
         setGeneratedIcons([...systemIcons.filter(Boolean)]);
 
-        // Small delay between batches to avoid rate-limiting on Gemini
         if (batchStart + BATCH_SIZE < selectedIcons.length) {
           await delay(800);
         }

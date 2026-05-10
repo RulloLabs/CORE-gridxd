@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/api/authService";
 
 interface AuthModalProps {
   open: boolean;
@@ -73,27 +74,15 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
         </h2>
 
         {!isReset && (
-          <button
+        <button
             type="button"
             onClick={async () => {
               setLoading(true);
               try {
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                  provider: "google",
-                  options: {
-                    redirectTo: window.location.origin,
-                    scopes: "email profile openid",
-                  }
-                });
-                if (error) {
-                  toast.error(error.message || "Error con Google");
-                }
-                if (data?.url) {
-                  window.location.href = data.url;
-                }
+                await authService.signInWithGoogle();
               } catch (err: unknown) {
                 const error = err as Error;
-                toast.error(error.message || "Error con Google");
+                toast.error(error.message || "Error al conectar con Google");
               } finally {
                 setLoading(false);
               }

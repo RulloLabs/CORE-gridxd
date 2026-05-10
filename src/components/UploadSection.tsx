@@ -17,25 +17,20 @@ const UploadSection = () => {
   const [upgradeStyle, setUpgradeStyle] = useState<SvgStyle | null>(null);
 
   const handleDownloadZip = async () => {
-    // Show upsell for free users before download if they didn't use backend
-    if (!processor.usedBackend && plan === "free" && !showUpsell) {
-      setShowUpsell(true);
-      return;
-    }
-
     const { icons, options, visualStyle } = processor;
     
-    // PRO+ can export all 3 styles
+    if (icons.length === 0) return;
+    
+    // PRO+ exports all 3 styles, others export selected style only
     const styles: SvgStyle[] = (plan === "proplus") ? ["outline", "filled", "duotone"] : [exportStyle];
+    const name = options.projectName.trim() || "GridXD_Export";
 
     await downloadAssetsZip(icons, {
-      projectName: options.projectName || "gridxd",
+      projectName: name,
       exportStyles: styles,
       visualStyle,
       compress: true
     });
-    
-    setShowUpsell(false);
   };
 
   return (

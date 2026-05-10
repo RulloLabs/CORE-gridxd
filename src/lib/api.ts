@@ -155,25 +155,58 @@ export async function processImageBackend(
   return ProcessedResultSchema.parse(raw);
 }
 
+// ─── Default VisualStyle fallback (used when backend is unavailable) ──────────
+export const DEFAULT_VISUAL_STYLE: VisualStyle = {
+  style: "outline",
+  stroke_width: 2,
+  corner_radius: "rounded",
+  color_primary: "#7c3aed",
+  color_secondary: "#a78bfa",
+  color_accent: "#06b6d4",
+  color_bg: "#0f0f0f",
+  mood: "minimal",
+  complexity: "simple",
+  grid_size: 24,
+  visual_weight: "regular",
+  notes: "Estilo base generado automáticamente.",
+};
+
 // ─── Extract Style (PROTECTED) ────────────────────────────────────────────────
 export async function extractStyleFromBackend(
   file: File
-): Promise<VisualStyle | null> {
-  if (!API_BASE_URL) return null;
+): Promise<VisualStyle> {
+  // Generate a color hint from the file name for a slightly personalised fallback
+  const seed = file.name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const hue = seed % 360;
+  const fallback: VisualStyle = {
+    ...DEFAULT_VISUAL_STYLE,
+    color_primary: `hsl(${hue}, 70%, 55%)`,
+    color_secondary: `hsl(${(hue + 30) % 360}, 60%, 65%)`,
+    color_accent: `hsl(${(hue + 180) % 360}, 80%, 50%)`,
+    notes: `Estilo generado a partir de: ${file.name}`,
+  };
+
+  if (!API_BASE_URL) return fallback;
+
   try {
     const authHeaders = await getAuthHeaders();
     const formData = new FormData();
     formData.append("image", file);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(`${API_BASE_URL}/extract-style`, {
       method: "POST",
       headers: authHeaders,
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      logger.warn("Style extraction backend error:", response.status);
-      return null;
+      logger.warn("Style extraction backend error:", response.status, "— using fallback");
+      return fallback;
     }
 
     const data = await response.json();
@@ -182,13 +215,13 @@ export async function extractStyleFromBackend(
     const styleRaw = data?.style || data;
     const parsed = VisualStyleSchema.safeParse(styleRaw);
     if (!parsed.success) {
-      logger.error("Invalid style format:", parsed.error);
-      return null;
+      logger.error("Invalid style format:", parsed.error, "— using fallback");
+      return fallback;
     }
     return parsed.data;
   } catch (err) {
-    logger.error("extractStyleFromBackend error:", err);
-    return null;
+    logger.warn("extractStyleFromBackend failed — using fallback:", err);
+    return fallback;
   }
 }
 

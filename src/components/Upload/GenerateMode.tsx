@@ -19,9 +19,11 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
-    if (!projectName && setProjectName) {
-      const defaultName = file.name.split('.').slice(0, -1).join('.') || file.name;
-      setProjectName(defaultName.replace(/[^a-zA-Z0-9_-]/g, '_'));
+    // Auto-generate project name from file if not set
+    const autoName = file.name.split('.').slice(0, -1).join('.').replace(/[^a-zA-Z0-9_-]/g, '_') || "GridXD_System";
+    const effectiveName = projectName.trim() || autoName;
+    if (!projectName.trim() && setProjectName) {
+      setProjectName(effectiveName);
     }
     generator.generateSystem(file, generator.activeStyle, generator.packSize);
   };

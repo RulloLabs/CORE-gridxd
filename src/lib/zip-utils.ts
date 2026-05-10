@@ -17,11 +17,41 @@ export async function downloadAssetsZip(
   options: ZipExportOptions
 ) {
   try {
+    if (icons.length === 0) {
+      toast.error("No hay iconos para exportar.");
+      return;
+    }
     toast.info("Generando archivo ZIP, por favor espera...");
     const zip = new JSZip();
     const { projectName, exportStyles, visualStyle, compress } = options;
     const primaryColor = visualStyle?.color_primary || "#7c3aed";
     const timestamp = new Date().toISOString().split("T")[0].replace(/-/g, "");
+
+    // Helper: resolve an icon's image data as a Blob (supports both base64 and HTTP URLs)
+    const resolveImageBlob = async (dataUrl: string): Promise<Blob | null> => {
+      if (!dataUrl) return null;
+      if (dataUrl.startsWith("data:")) {
+        // Standard base64 data URL
+        const [header, base64] = dataUrl.split(",");
+        if (!base64) return null;
+        const mime = header.split(":")[1]?.split(";")[0] || "image/png";
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+      }
+      if (dataUrl.startsWith("http")) {
+        // Remote URL from Railway backend — fetch it
+        try {
+          const res = await fetch(dataUrl);
+          if (!res.ok) return null;
+          return await res.blob();
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    };
 
     // Create folder structure for each style
     for (const style of exportStyles) {
@@ -29,17 +59,21 @@ export async function downloadAssetsZip(
       if (!styleFolder) continue;
 
       for (const icon of icons) {
-        // Handle PNGs only in the first style or root if requested
+        // PNG — only in first style folder to avoid duplication
         if (icon.dataUrl && style === exportStyles[0]) {
-          const base64 = icon.dataUrl.split(",")[1];
-          styleFolder.file(icon.name, base64, { base64: true });
+          const blob = await resolveImageBlob(icon.dataUrl);
+          if (blob) {
+            const arrayBuf = await blob.arrayBuffer();
+            styleFolder.file(icon.name, arrayBuf);
+          }
         }
 
-        // Handle SVGs
+        // SVG — apply requested style transform
         if (icon.svgContent) {
           const styledSvg = applyStyleToSvg(icon.svgContent, style, primaryColor);
-          const svgName = icon.name.replace(".png", `.${style}.svg`).replace(".svg", `.${style}.svg`).replace(`.${style}.${style}.svg`, `.${style}.svg`);
-          styleFolder.file(svgName, styledSvg);
+          // Normalise the svg filename cleanly
+          const baseName = icon.name.replace(/\.(png|svg)$/, "");
+          styleFolder.file(`${baseName}.${style}.svg`, styledSvg);
         }
       }
     }
@@ -56,7 +90,7 @@ export async function downloadAssetsZip(
       zip.file("design-dna.json", JSON.stringify(manifest, null, 2));
     }
 
-    // Add simple README
+    // README
     const readme = `# ${projectName} - GRIDXD Assets
     
 Generado por GRIDXD (2026)
@@ -83,7 +117,9 @@ gridxd.io - Professional Icon Extraction & Generation`;
     const a = document.createElement("a");
     a.href = url;
     a.download = `${projectName.toLowerCase().replace(/\s+/g, "-")}-assets.zip`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Descarga completada correctamente");
   } catch (error) {

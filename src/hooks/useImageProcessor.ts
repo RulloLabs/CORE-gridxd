@@ -397,17 +397,15 @@ export function useImageProcessor() {
     [pendingImgEl, pendingOptions]
   );
 
-  // ─── Client-side flow: detect → style extract (parallel) → editing ────────
   const processClientSide = useCallback(
     async (file: File, options: ProcessingOptions) => {
       setState("uploading");
       await delay(400);
       setState("detecting");
 
-      // Kick off Gemini style extraction in parallel with image loading
+      // Kick off style extraction in parallel with image loading (never throws, always returns style)
       const stylePromise = extractStyleFromBackend(file);
 
-      // Load image element (reused across phases)
       const imgEl = await new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
@@ -417,14 +415,12 @@ export function useImageProcessor() {
 
       await delay(300);
 
-      // Run BFS in Web Worker — no main thread blocking
       const regions = await detectRegionsViaWorker(imgEl);
 
-      // Resolve style analysis (non-blocking — null if backend not configured)
+      // Always resolves to a VisualStyle (fallback if backend offline)
       const style = await stylePromise;
-      if (style) setVisualStyle(style);
+      setVisualStyle(style);
 
-      // Save for editor
       setPendingImgEl(imgEl);
       setPendingOptions(options);
       setDetectedRegions(regions);
