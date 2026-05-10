@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Update Browserslist
+        run: bunx update-browserslist-db@latest
+
       - name: Install Vercel CLI
         run: bun install -g vercel@latest
 
