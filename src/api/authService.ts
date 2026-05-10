@@ -16,6 +16,14 @@ export const authService = {
   },
 
   /**
+   * Listen to auth state changes
+   */
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
+    const { data } = supabase.auth.onAuthStateChange(callback);
+    return data.subscription;
+  },
+
+  /**
    * Sign in with Google
    */
   async signInWithGoogle() {

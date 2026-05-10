@@ -1,4 +1,5 @@
 {
+  "name": "core-gridxd",
   "framework": "vite",
   "buildCommand": "bun run build",
   "outputDirectory": "dist",
