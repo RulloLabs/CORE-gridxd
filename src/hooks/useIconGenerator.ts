@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { extractStyleFromBackend, generateIconSVG, VisualStyle } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { applyStyleToSvg, type SvgStyle } from "@/lib/svgStyle";
+import { downloadGeneratorPack } from "@/lib/zip-utils";
 import { 
   Home, User, Settings, Search, Menu, ArrowLeft, 
   Check, AlertTriangle, Bell, Trash, Plus, Download,
@@ -148,13 +149,14 @@ export function useIconGenerator() {
   const downloadPack = async (projectName: string = "gridxd-system", style: SvgStyle = "outline", allStyles: boolean = false) => {
     if (!visualStyle) return;
 
+    // Normalize empty name — always produce a valid filename
+    const safeName = projectName.trim() || "GridXD_System";
+
     try {
-      const { downloadGeneratorPack } = await import("@/lib/zip-utils");
-      
       const exportStyles: SvgStyle[] = allStyles ? ["outline", "filled", "duotone"] : [style];
 
       await downloadGeneratorPack(generatedIcons, visualStyle, {
-        projectName,
+        projectName: safeName,
         exportStyles,
         compress: true
       });

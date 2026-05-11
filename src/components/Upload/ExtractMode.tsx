@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2, Download, Sparkles, Lock, Maximize2 } from "lucide-react";
-import { isBackendConfigured } from "@/lib/api";
+import { isBackendConfigured, checkBackendHealth } from "@/lib/api";
 import { SvgStyle, STYLE_META, canAccessStyle } from "@/lib/svgStyle";
 import { useAuth } from "@/contexts/AuthContext";
 import IconEditor from "@/components/IconEditor";
@@ -43,10 +43,8 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
 
   useEffect(() => {
     if (isBackendConfigured()) {
-      import("@/lib/api").then(({ checkBackendHealth }) => {
-        checkBackendHealth().then(isOnline => {
-          setBackendStatus(isOnline ? 'online' : 'offline');
-        });
+      checkBackendHealth().then(isOnline => {
+        setBackendStatus(isOnline ? 'online' : 'offline');
       });
     }
   }, []);

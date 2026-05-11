@@ -186,7 +186,9 @@ gridxd.io — Design Intelligence`;
     const a = document.createElement("a");
     a.href = url;
     a.download = `${projectName.toLowerCase().replace(/\s+/g, "-")}-system-pack.zip`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Descarga del sistema completada correctamente");
   } catch (error) {

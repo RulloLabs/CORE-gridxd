@@ -239,11 +239,17 @@ export async function generateIconSVG(
     formData.append("dna", JSON.stringify(dna));
     formData.append("variant", variant);
 
+    // 20s timeout — prevents a single slow icon from blocking the whole batch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     const response = await fetch(`${API_BASE_URL}/generate-icon`, {
       method: "POST",
       headers: authHeaders,
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({})) as Record<string, unknown>;
@@ -254,7 +260,11 @@ export async function generateIconSVG(
     const data = await response.json() as { svg?: string };
     return data?.svg || (typeof data === "string" ? data : null);
   } catch (err) {
-    logger.error("generateIconSVG error:", err);
+    if (err instanceof Error && err.name === "AbortError") {
+      logger.warn(`generateIconSVG timeout for "${iconName}" — using Lucide fallback`);
+    } else {
+      logger.error("generateIconSVG error:", err);
+    }
     return null;
   }
 }
