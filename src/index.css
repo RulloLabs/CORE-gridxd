@@ -342,6 +342,20 @@
     background-image: linear-gradient(hsl(var(--cyan)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--cyan)) 1px, transparent 1px);
     background-size: 60px 60px;
   }
+
+  /* Icon preview with glow — replaces inline filter style in GenerateMode */
+  .icon-glow-preview {
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6));
+    transition: filter 0.3s ease;
+  }
+
+  .group:hover .icon-glow-preview {
+    filter: drop-shadow(0 0 14px hsl(var(--primary) / 0.9));
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
 }
 
 @keyframes shine {

@@ -28,6 +28,9 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
     generator.generateSystem(file, generator.activeStyle, generator.packSize);
   };
 
+  // Cast plan to the exact union type expected by canAccessStyle
+  const userPlan = (plan as "free" | "pro" | "proplus") ?? "free";
+
   return (
     <div className="relative glass-card rounded-[3rem] p-8 md:p-16 text-center overflow-hidden">
       {/* Decorative Background Elements */}
@@ -56,7 +59,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     key={size}
                     onClick={() => generator.setPackSize(size)}
                     title={`Pack de ${size} iconos`}
-                    aria-pressed={generator.packSize === size}
+                    aria-pressed={generator.packSize === size ? "true" : "false"}
                     className={`flex-1 py-3 text-xs rounded-xl font-black transition-all duration-300 ${
                       generator.packSize === size 
                         ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30" 
@@ -77,7 +80,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     key={v}
                     onClick={() => generator.setActiveStyle(v)}
                     title={`Estilo: ${STYLE_META[v].label}`}
-                    aria-pressed={generator.activeStyle === v}
+                    aria-pressed={generator.activeStyle === v ? "true" : "false"}
                     className={`flex-1 py-3 text-xs rounded-xl font-black capitalize transition-all duration-300 ${
                       generator.activeStyle === v 
                         ? "bg-secondary text-secondary-foreground shadow-xl shadow-secondary/30" 
@@ -161,9 +164,10 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
           </h3>
           <div className="flex items-center justify-center gap-3">
             <div className="flex gap-1">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
-              ))}
+              {/* Staggered bounce dots — CSS classes used instead of inline style */}
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.6s]" />
             </div>
             <p className="text-muted-foreground font-bold text-sm tracking-wide uppercase">
               {generator.state === "analyzing" ? "Interpretando trazos y paleta" : "Generando variantes de sistema"}
@@ -193,14 +197,14 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
             <span className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Variantes de Estilo:</span>
             <div className="flex flex-wrap gap-3">
               {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
-                const locked = !canAccessStyle(plan as any, s);
+                const locked = !canAccessStyle(userPlan, s);
                 const active = generator.activeStyle === s;
                 return (
                   <button
                     key={s}
                     onClick={() => locked ? onUpgrade(s) : generator.setActiveStyle(s)}
                     title={locked ? "Requiere plan PRO" : STYLE_META[s].description}
-                    aria-pressed={active}
+                    aria-pressed={active ? "true" : "false"}
                     className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-xs font-black transition-all duration-300 ${
                       locked
                         ? "border-white/5 text-muted-foreground opacity-40 cursor-not-allowed bg-transparent"
@@ -231,10 +235,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                   key={icon.id}
                   className="group relative flex flex-col items-center gap-4 transition-all duration-500"
                   aria-label={`Vista previa del icono ${icon.name}`}
-                  style={{ 
-                    "--icon-color": primaryColor,
-                    "--icon-stroke": String(strokeWidth)
-                  } as React.CSSProperties}
+                  data-icon-color={primaryColor}
                 >
                   <div className="w-full aspect-square glass-panel rounded-[2.5rem] flex items-center justify-center relative overflow-hidden transition-all duration-500 group-hover:border-primary/40 group-hover:shadow-2xl group-hover:shadow-primary/20 group-hover:-translate-y-2 group-active:scale-95">
                     {/* Background Light */}
@@ -249,16 +250,13 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     <div className="relative w-16 h-16 flex items-center justify-center z-10">
                       {previewSvg ? (
                         <div 
-                          className="w-full h-full transition-all duration-500 group-hover:scale-110 text-[var(--icon-color)]"
-                          style={{ 
-                            filter: "drop-shadow(0 0 8px var(--icon-color))" 
-                          }}
+                          className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
                           dangerouslySetInnerHTML={{ __html: previewSvg }}
                           aria-hidden="true"
                         />
                       ) : (
                         <icon.icon 
-                          className="w-full h-full transition-all duration-500 group-hover:scale-110 text-[var(--icon-color)]" 
+                          className="w-full h-full transition-all duration-500 group-hover:scale-110 text-primary" 
                           strokeWidth={strokeWidth}
                         />
                       )}
@@ -298,9 +296,9 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
             </div>
             
             <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              {plan === "proplus" && (
+              {userPlan === "proplus" && (
                 <button 
-                  onClick={() => (generator as any).downloadPack(projectName, generator.activeStyle, true)}
+                  onClick={() => generator.downloadPack(projectName, generator.activeStyle, true)}
                   className="premium-button premium-button-outline"
                 >
                   Pack Maestro (ZIP)
