@@ -7,6 +7,7 @@ import {
   extractStyleFromBackend,
   ProcessingOptions,
   VisualStyle,
+  DEFAULT_VISUAL_STYLE,
 } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,7 +75,9 @@ async function detectRegionsViaWorker(
   ctx.drawImage(imgEl, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  return new Promise((resolve) => {
+  const fallbackRegion: Region = { id: "region-0-fallback", minX: 0, minY: 0, maxX: canvas.width, maxY: canvas.height };
+
+  const workerPromise = new Promise<Region[]>((resolve) => {
     const worker = new Worker(
       new URL("../workers/regionDetector.worker.ts", import.meta.url),
       { type: "module" }
@@ -83,8 +86,7 @@ async function detectRegionsViaWorker(
       worker.terminate();
       if (e.data.error) {
         logger.error("Worker region detection error:", e.data.error);
-        // Fallback: treat whole image as one region
-        resolve([{ id: "region-0-fallback", minX: 0, minY: 0, maxX: canvas.width, maxY: canvas.height }]);
+        resolve([fallbackRegion]);
       } else {
         resolve(e.data.regions);
       }
@@ -92,10 +94,20 @@ async function detectRegionsViaWorker(
     worker.onerror = (err) => {
       worker.terminate();
       logger.error("Worker error:", err);
-      resolve([{ id: "region-0-fallback", minX: 0, minY: 0, maxX: canvas.width, maxY: canvas.height }]);
+      resolve([fallbackRegion]);
     };
     worker.postMessage({ imageData, width: canvas.width, height: canvas.height });
   });
+
+  // 15s timeout — prevents silent worker hang from freezing the UI
+  const timeoutPromise = new Promise<Region[]>((resolve) => {
+    setTimeout(() => {
+      logger.warn("detectRegionsViaWorker timed out after 15s — using full-image fallback");
+      resolve([fallbackRegion]);
+    }, 15000);
+  });
+
+  return Promise.race([workerPromise, timeoutPromise]);
 }
 
 // ─── PHASE 1 fallback (kept for reference, no longer used on main thread) ─────
@@ -340,7 +352,7 @@ export function useImageProcessor() {
   const [detectedRegions, setDetectedRegions] = useState<Region[]>([]);
   const [pendingImgEl, setPendingImgEl] = useState<HTMLImageElement | null>(null);
   const [pendingOptions, setPendingOptions] = useState<ProcessingOptions | null>(null);
-  const [visualStyle, setVisualStyle] = useState<VisualStyle | null>(null);
+  const [visualStyle, setVisualStyle] = useState<VisualStyle>(DEFAULT_VISUAL_STYLE);
 
   // Options
   const [removeBackground, setRemoveBackground] = useState(true);
@@ -554,7 +566,7 @@ export function useImageProcessor() {
     setDetectedRegions([]);
     setPendingImgEl(null);
     setPendingOptions(null);
-    setVisualStyle(null);
+    setVisualStyle(DEFAULT_VISUAL_STYLE);
   };
 
   const injectGeneratedIcon = useCallback((svgContent: string, conceptName: string) => {
