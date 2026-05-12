@@ -3,10 +3,9 @@ import io
 import uuid
 import zipfile
 from typing import List, Optional
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import numpy as np
 import cv2
 from PIL import Image
@@ -19,17 +18,16 @@ load_dotenv()
 
 from style_extractor import extract_style, generate_icon_svg
 from auth_middleware import verify_supabase_jwt
+from supabase_service import upload_to_storage
 
 app = FastAPI(title="GridXD Processing Backend", version="2.0.0")
 
 # ─── CORS — NO WILDCARD ───────────────────────────────────────────────────────
-# List ALL allowed origins explicitly. Wildcard "*" is removed to prevent
-# cross-origin requests from unknown domains.
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://gridxd.vercel.app",
-    "https://gridxd-core-eta.vercel.app",  # Current production URL
+    "https://gridxd-core-eta.vercel.app",
 ]
 
 # Allow preview deployments dynamically via env var
@@ -55,41 +53,6 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
     return response
-
-# Storage for processed images (temporary for this session)
-OUTPUT_DIR = "static/outputs"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-import logging
-
-logger = logging.getLogger("gridxd.cleanup")
-
-def cleanup_old_sessions(max_age_seconds: int = 3600):
-    """
-    Scans the OUTPUT_DIR and removes folders older than max_age_seconds.
-    Prevents server disk exhaustion.
-    """
-    import shutil
-    import time
-    try:
-        now = time.time()
-        removed_count = 0
-        for session_id in os.listdir(OUTPUT_DIR):
-            session_path = os.path.join(OUTPUT_DIR, session_id)
-            if os.path.isdir(session_path):
-                # Use folder modification time to determine age
-                age = now - os.path.getmtime(session_path)
-                if age > max_age_seconds:
-                    shutil.rmtree(session_path)
-                    removed_count += 1
-                    logger.info(f"Cleaned up old session: {session_id} (age: {age:.1f}s)")
-        
-        if removed_count > 0:
-            logger.info(f"Cleanup task finished. Removed {removed_count} old session(s).")
-    except Exception as e:
-        logger.error(f"Cleanup error: {e}", exc_info=True)
 
 
 def detect_icons(image_np):
@@ -191,11 +154,8 @@ async def process_image(
     project_name: Optional[str] = Form(None),
     system_prompt: Optional[str] = Form(None),
     analyze_style: str = Form("true"),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
     user_id: str = Depends(verify_supabase_jwt),
 ):
-    # Proactive cleanup of old sessions
-    background_tasks.add_task(cleanup_old_sessions)
     try:
         # ── Limit File Size (10MB) ───────────────────────────────────────────
         MAX_SIZE = 10 * 1024 * 1024
@@ -216,7 +176,7 @@ async def process_image(
                 pil_for_style = Image.fromarray(cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB))
                 style_result = await extract_style(pil_for_style)
             except Exception:
-                pass  # Non-blocking — processing continues
+                pass 
 
         # Detect icons
         regions = detect_icons(img_np)
@@ -225,14 +185,12 @@ async def process_image(
             regions = [(0, 0, w, h)]
 
         session_id = str(uuid.uuid4())
-        session_dir = os.path.join(OUTPUT_DIR, session_id)
-        os.makedirs(session_dir, exist_ok=True)
-
         results = []
-        zip_filename = f"{project_name or 'gridxd'}_assets.zip"
-        zip_path = os.path.join(session_dir, zip_filename)
-
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        
+        # Memory buffer for the ZIP
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
             for i, (x, y, w, h) in enumerate(regions[:20]):
                 padding = 20
                 x1 = max(0, x - padding)
@@ -248,23 +206,43 @@ async def process_image(
                 else:
                     roi_processed = roi_pil
 
-                if upscale.lower() == "true":
-                    roi_processed = roi_processed.resize((2048, 2048), Image.Resampling.LANCZOS)
-                else:
-                    roi_processed = roi_processed.resize((1024, 1024), Image.Resampling.LANCZOS)
+                size = (2048, 2048) if upscale.lower() == "true" else (1024, 1024)
+                roi_processed = roi_processed.resize(size, Image.Resampling.LANCZOS)
 
+                # Save to bytes
+                img_byte_arr = io.BytesIO()
+                roi_processed.save(img_byte_arr, format='PNG')
+                img_bytes = img_byte_arr.getvalue()
+
+                # Upload to Supabase Storage
                 icon_name_file = f"icon_{i+1:02d}.png"
-                icon_path = os.path.join(session_dir, icon_name_file)
-                roi_processed.save(icon_path)
-                zip_file.write(icon_path, icon_name_file)
+                storage_path = f"{user_id}/{session_id}/{icon_name_file}"
+                
+                public_url = await upload_to_storage(
+                    bucket="processed_assets",
+                    path=storage_path,
+                    file_content=img_bytes
+                )
 
-                results.append({
-                    "url": f"/static/outputs/{session_id}/{icon_name_file}",
-                    "name": icon_name_file
-                })
+                if public_url:
+                    zip_file.writestr(icon_name_file, img_bytes)
+                    results.append({
+                        "url": public_url,
+                        "name": icon_name_file
+                    })
+
+        # Upload ZIP
+        zip_filename = f"{project_name or 'gridxd'}_assets.zip"
+        zip_storage_path = f"{user_id}/{session_id}/{zip_filename}"
+        zip_public_url = await upload_to_storage(
+            bucket="processed_assets",
+            path=zip_storage_path,
+            file_content=zip_buffer.getvalue(),
+            content_type="application/zip"
+        )
 
         response = {
-            "zipUrl": f"/static/outputs/{session_id}/{zip_filename}",
+            "zipUrl": zip_public_url,
             "images": results,
         }
         if style_result:
