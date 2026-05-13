@@ -58,17 +58,20 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Build and Push Container
+      # Build, push, and deploy in a single step to keep IMAGE_URL in shell scope
+      - name: Build, Push and Deploy to Cloud Run
         run: |
           IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          docker build -t "$IMAGE_URL" ./backend
-          docker push "$IMAGE_URL"
-          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_ENV
 
-      - name: Deploy to Cloud Run
-        run: |
+          echo "🔨 Building image: $IMAGE_URL"
+          docker build -t "$IMAGE_URL" ./backend
+
+          echo "📤 Pushing image..."
+          docker push "$IMAGE_URL"
+
+          echo "🚀 Deploying to Cloud Run..."
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image "${{ env.IMAGE_URL }}" \
+            --image "$IMAGE_URL" \
             --project=${{ env.PROJECT_ID }} \
             --region=${{ env.REGION }} \
             --platform=managed \
@@ -81,22 +84,21 @@ jobs:
             --concurrency=1 \
             --set-env-vars="SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}"
 
-      - name: Show deployed URL
+      # Get the URL and run health check — both in the same shell, no cross-step env issue
+      - name: Health check
         run: |
-          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+          CLOUD_RUN_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --project=${{ env.PROJECT_ID }} \
             --region=${{ env.REGION }} \
             --format='value(status.url)')
-          echo "✅ Backend deployed at: $URL"
-          echo "CLOUD_RUN_URL=$URL" >> $GITHUB_ENV
 
-      - name: Health check
-        run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.CLOUD_RUN_URL }}/health")
+          echo "✅ Backend deployed at: $CLOUD_RUN_URL"
+
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CLOUD_RUN_URL/health")
           echo "Health check status: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "❌ Health check failed!"
+            echo "❌ Health check failed with status $STATUS"
             exit 1
           fi
           echo "✅ Health check passed!"
