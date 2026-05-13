@@ -43,3 +43,26 @@ async def check_rate_limit(user_id: str) -> bool:
     except Exception as e:
         print(f"Error checking rate limit: {e}")
         return True # Fail open to avoid blocking users if Supabase is down
+
+async def upload_to_storage(bucket: str, path: str, file_content: bytes, content_type: str = "image/png") -> Optional[str]:
+    """
+    Uploads a file to Supabase Storage and returns the public URL.
+    """
+    client = get_supabase()
+    if client is None:
+        return None
+
+    try:
+        # Upload the file
+        client.storage.from_(bucket).upload(
+            path=path,
+            file=file_content,
+            file_options={"content-type": content_type, "upsert": "true"}
+        )
+        
+        # Get public URL
+        response = client.storage.from_(bucket).get_public_url(path)
+        return response
+    except Exception as e:
+        print(f"Error uploading to storage: {e}")
+        return None

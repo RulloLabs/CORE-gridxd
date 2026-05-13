@@ -16,10 +16,11 @@ El proyecto se divide en dos entornos principales:
 
 ### 2. Backend (GridXD Engine)
 
-- **Núcleo:** Python (FastAPI)
+- **Núcleo:** Python (FastAPI) — **Stateless Architecture**
 - **Procesamiento de Imagen:** OpenCV, rembg (Eliminación de fondo), ImageTracer
 - **Modelos IA:** Gemini 1.5 Flash (Extracción de estilo y generación SVG)
-- **Despliegue:** Railway / Docker
+- **Despliegue:** **Google Cloud Run (Serverless)**
+- **Almacenamiento de Salida:** Supabase Storage (en lugar de disco local para escalabilidad total)
 
 ### 3. Infraestructura y Servicios
 
