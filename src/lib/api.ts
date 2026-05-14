@@ -89,7 +89,7 @@ export async function checkBackendHealth(): Promise<boolean> {
     logger.log("Backend operational:", data);
     return true;
   } catch (err) {
-    logger.error("Could not connect to Railway backend:", err);
+    logger.error("Could not connect to backend server:", err);
     return false;
   }
 }
@@ -137,7 +137,7 @@ export async function processImageBackend(
   if (!response.ok) {
     const errorData = await response
       .json()
-      .catch(() => ({ detail: "Railway server error" })) as { detail?: string };
+      .catch(() => ({ detail: "Backend server error" })) as { detail?: string };
     throw new Error(errorData.detail || `Error ${response.status}`);
   }
 

@@ -1,6 +1,9 @@
 import os
+import logging
 from typing import Optional
 from supabase import create_client, Client
+
+logger = logging.getLogger("gridxd.supabase")
 
 # Supabase Configuration
 SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL") or os.environ.get("SUPABASE_URL")
@@ -18,11 +21,12 @@ def get_supabase() -> Client:
         if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
             # Fallback to a dummy client or raise error if in production
             if os.environ.get("DEBUG", "false").lower() == "true":
-                print("WARNING: Supabase credentials missing. Rate limiting will be disabled.")
+                logger.warning("⚠️ Supabase credentials missing. Rate limiting will be disabled.")
                 return None
             raise ValueError("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing")
         
         _client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        logger.info("✅ Supabase client initialized")
     return _client
 
 async def check_rate_limit(user_id: str) -> bool:
@@ -35,13 +39,10 @@ async def check_rate_limit(user_id: str) -> bool:
         return True # Default to allow if not configured (dev mode)
 
     try:
-        # Note: rpc() in supabase-py is synchronous in the current version, 
-        # or can be used with postgrest-py's async features if using the async client.
-        # We'll use the standard synchronous call for now as it's simpler.
         response = client.rpc("check_and_increment_usage", {"p_user_id": user_id}).execute()
         return bool(response.data)
     except Exception as e:
-        print(f"Error checking rate limit: {e}")
+        logger.error(f"❌ Error checking rate limit: {e}")
         return True # Fail open to avoid blocking users if Supabase is down
 
 async def upload_to_storage(bucket: str, path: str, file_content: bytes, content_type: str = "image/png") -> Optional[str]:
@@ -54,6 +55,7 @@ async def upload_to_storage(bucket: str, path: str, file_content: bytes, content
 
     try:
         # Upload the file
+        logger.info(f"📤 Uploading to Supabase Storage: {bucket}/{path}")
         client.storage.from_(bucket).upload(
             path=path,
             file=file_content,
@@ -62,7 +64,8 @@ async def upload_to_storage(bucket: str, path: str, file_content: bytes, content
         
         # Get public URL
         response = client.storage.from_(bucket).get_public_url(path)
+        logger.info(f"✅ Upload successful: {response}")
         return response
     except Exception as e:
-        print(f"Error uploading to storage: {e}")
+        logger.error(f"❌ Error uploading to storage: {e}")
         return None

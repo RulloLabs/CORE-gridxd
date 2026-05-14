@@ -16,11 +16,30 @@ from dotenv import load_dotenv
 # Load local .env if present
 load_dotenv()
 
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("gridxd")
+
 from style_extractor import extract_style, generate_icon_svg
 from auth_middleware import verify_supabase_jwt
 from supabase_service import upload_to_storage
 
 app = FastAPI(title="GridXD Processing Backend", version="2.0.0")
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("🚀 GridXD Backend starting up...")
+    logger.info(f"SUPABASE_URL configured: {bool(os.environ.get('SUPABASE_URL'))}")
+    logger.info(f"GEMINI_API_KEY configured: {bool(os.environ.get('GEMINI_API_KEY'))}")
+    logger.info(f"SUPABASE_JWT_SECRET configured: {bool(os.environ.get('SUPABASE_JWT_SECRET'))}")
+    if os.environ.get("DEBUG", "false").lower() == "true":
+        logger.warning("⚠️ Running in DEBUG mode. Authentication might be bypassed if JWT_SECRET is missing.")
 
 # ─── CORS — NO WILDCARD ───────────────────────────────────────────────────────
 ALLOWED_ORIGINS = [
@@ -156,39 +175,51 @@ async def process_image(
     analyze_style: str = Form("true"),
     user_id: str = Depends(verify_supabase_jwt),
 ):
-    try:
+        logger.info(f"📸 Processing image for user: {user_id}")
+        
         # ── Limit File Size (10MB) ───────────────────────────────────────────
         MAX_SIZE = 10 * 1024 * 1024
         contents = await image.read()
         if len(contents) > MAX_SIZE:
+            logger.error(f"❌ File too large: {len(contents)} bytes")
             raise HTTPException(status_code=413, detail="Imagen demasiado grande (máx 10MB)")
 
         nparr = np.frombuffer(contents, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if img_np is None:
+            logger.error("❌ Invalid image format")
             raise HTTPException(status_code=400, detail="Imagen inválida")
 
         # ── Style Analysis ───────────────────────────────────────────────────
         style_result = None
         if analyze_style.lower() == "true":
+            logger.info("🎨 Extracting style DNA with Gemini...")
             try:
                 pil_for_style = Image.fromarray(cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB))
                 style_result = await extract_style(pil_for_style)
-            except Exception:
+                logger.info("✅ Style extracted successfully")
+            except Exception as e:
+                logger.warning(f"⚠️ Style extraction failed: {e}")
                 pass 
 
         # Detect icons
+        logger.info("🔍 Detecting icons with OpenCV...")
         regions = detect_icons(img_np)
         if not regions:
+            logger.info("ℹ️ No specific icons detected, processing full image")
             h, w = img_np.shape[:2]
             regions = [(0, 0, w, h)]
+        else:
+            logger.info(f"✅ Detected {len(regions)} icon regions")
 
         session_id = str(uuid.uuid4())
         results = []
         
         # Memory buffer for the ZIP
         zip_buffer = io.BytesIO()
+        
+        logger.info(f"⚡ Processing {min(len(regions), 20)} icons...")
         
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
             for i, (x, y, w, h) in enumerate(regions[:20]):

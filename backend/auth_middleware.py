@@ -1,6 +1,6 @@
 """
 GridXD Backend — JWT Auth Middleware
-Validates Supabase JWT tokens to protect Railway endpoints.
+Validates Supabase JWT tokens to protect Cloud Run endpoints.
 """
 import os
 import logging

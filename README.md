@@ -82,10 +82,11 @@ El proyecto se divide en dos entornos principales:
 - Configurar las variables de entorno en el panel de Vercel.
 - La rama `main` se despliega automáticamente con cada push.
 
-### Backend (Railway)
-
-- Desplegar el servicio Python usando el `Dockerfile` incluido.
-- Asegurar que `STRIPE_WEBHOOK_SECRET` y `GEMINI_API_KEY` estén configuradas en las variables de Railway.
+### Backend (Google Cloud Run)
+ 
+ - Desplegar el servicio Python usando el `Dockerfile` incluido.
+ - Se recomienda usar el workflow de GitHub Actions `.github/workflows/deploy-backend.yml` para automatizar el build a Artifact Registry y el despliegue a Cloud Run.
+ - Asegurar que todas las variables de entorno (`GEMINI_API_KEY`, `SUPABASE_URL`, etc.) estén configuradas en los secretos de GitHub.
 
 ## 📂 Estructura del Proyecto
 

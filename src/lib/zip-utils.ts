@@ -41,7 +41,7 @@ export async function downloadAssetsZip(
         return new Blob([bytes], { type: mime });
       }
       if (dataUrl.startsWith("http")) {
-        // Remote URL from Railway backend — fetch it
+        // Remote URL from Cloud Run / Supabase Storage — fetch it
         try {
           const res = await fetch(dataUrl);
           if (!res.ok) return null;

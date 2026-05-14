@@ -23,14 +23,18 @@ jobs:
       - name: Update Browserslist
         run: bunx update-browserslist-db@latest
 
-      - name: Build project
-        run: bun run build
-
       - name: Install Vercel CLI
         run: bun install -g vercel@latest
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build project
+        run: vercel build --prod
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

@@ -53,26 +53,31 @@ En el panel de Supabase (Authentication -> Providers -> Google):
 
 ---
 
-## 3. Railway (Backend Workers / IA)
-
-Railway gestiona el backend intensivo (FastAPI/Node) para la generación de vectores o procesamiento avanzado no apto para Edge Functions.
-
-### Variables Requeridas (Panel de Railway)
-
-- `SUPABASE_URL`: Para conectarse a la DB.
-- `SUPABASE_SERVICE_KEY`: Para lecturas/escrituras administrativas (worker).
-- `OPENAI_API_KEY` (si aplica para IA): Clave de OpenAI u otro proveedor LLM.
-- `PORT`: El puerto de escucha (Railway suele inyectarlo automáticamente).
-
----
-
-## 🔄 Flujo de Sincronización en Despliegues
-
-1. **Github Actions (`.github/workflows/deploy.yml`)**:
-   - Gestiona el despliegue automático a Vercel.
-   - Requiere los secretos: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
-
-2. **Webhooks de Stripe**:
+## 3. Google Cloud Run (Backend Workers / IA)
+ 
+ Cloud Run gestiona el backend intensivo (FastAPI/Python) para la generación de vectores o procesamiento avanzado. Es una infraestructura *serverless* que escala a cero cuando no se usa.
+ 
+ ### Variables Requeridas (Panel de Google Cloud Console / Secrets)
+ 
+ - `SUPABASE_URL`: Para conectarse a la DB y Storage.
+ - `SUPABASE_SERVICE_ROLE_KEY`: Para lecturas/escrituras administrativas y subida de assets.
+ - `SUPABASE_JWT_SECRET`: Para validar los tokens de los usuarios.
+ - `GEMINI_API_KEY`: Clave para la IA de Google.
+ - `PORT`: El puerto de escucha (Cloud Run lo inyecta automáticamente, por defecto 8080).
+ 
+ ---
+ 
+ ## 🔄 Flujo de Sincronización en Despliegues
+ 
+ 1. **Github Actions (`.github/workflows/deploy.yml`)**:
+    - Gestiona el despliegue automático del Frontend a Vercel.
+    - Requiere los secretos: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+ 
+ 2. **Github Actions (`.github/workflows/deploy-backend.yml`)**:
+    - Gestiona el despliegue del Backend a Google Cloud Run.
+    - Requiere los secretos: `GCP_PROJECT_ID`, `GCP_SA_KEY`, además de los secretos del backend listados arriba.
+ 
+ 3. **Webhooks de Stripe**:
    - El Webhook de Stripe en el panel de desarrollador debe apuntar a la URL de producción de la Edge Function: `https://[PROJECT_REF].supabase.co/functions/v1/stripe-webhook`.
    - Una vez configurado, el `whsec_...` generado debe subirse a Supabase mediante `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...`.
 
@@ -85,4 +90,4 @@ Railway gestiona el backend intensivo (FastAPI/Node) para la generación de vect
 - [ ] Comprobar que Stripe está en modo **Live** y las claves empiezan por `sk_live_`.
 - [ ] Verificar que el webhook de Stripe en producción apunta a la URL real de Supabase y el secreto coincide.
 - [ ] Probar el registro con Google en producción (sin que lance "redirect_uri_mismatch").
-- [ ] Comprobar que la URL de Railway es correcta en el panel de Vercel (`VITE_RAILWAY_API_URL`).
+- [ ] Comprobar que la URL de Cloud Run es correcta en el panel de Vercel (`VITE_GRIDXD_API_URL`).
