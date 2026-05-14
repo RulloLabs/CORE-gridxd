@@ -175,6 +175,7 @@ async def process_image(
     analyze_style: str = Form("true"),
     user_id: str = Depends(verify_supabase_jwt),
 ):
+    try:
         logger.info(f"📸 Processing image for user: {user_id}")
         
         # ── Limit File Size (10MB) ───────────────────────────────────────────
