@@ -173,6 +173,7 @@ async def process_image(
     project_name: Optional[str] = Form(None),
     system_prompt: Optional[str] = Form(None),
     analyze_style: str = Form("true"),
+    regions: Optional[str] = Form(None),
     user_id: str = Depends(verify_supabase_jwt),
 ):
     try:
@@ -206,13 +207,26 @@ async def process_image(
 
         # Detect icons
         logger.info("🔍 Detecting icons with OpenCV...")
-        regions = detect_icons(img_np)
-        if not regions:
+        
+        regions_list = []
+        if regions:
+            import json
+            try:
+                parsed_regions = json.loads(regions)
+                regions_list = [(r['x'], r['y'], r['w'], r['h']) for r in parsed_regions]
+                logger.info(f"✅ Using {len(regions_list)} regions provided by frontend")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to parse provided regions: {e}. Falling back to auto-detect.")
+                regions_list = detect_icons(img_np)
+        else:
+            regions_list = detect_icons(img_np)
+
+        if not regions_list:
             logger.info("ℹ️ No specific icons detected, processing full image")
             h, w = img_np.shape[:2]
-            regions = [(0, 0, w, h)]
+            regions_list = [(0, 0, w, h)]
         else:
-            logger.info(f"✅ Detected {len(regions)} icon regions")
+            logger.info(f"✅ Processing {len(regions_list)} icon regions")
 
         session_id = str(uuid.uuid4())
         results = []
@@ -220,10 +234,10 @@ async def process_image(
         # Memory buffer for the ZIP
         zip_buffer = io.BytesIO()
         
-        logger.info(f"⚡ Processing {min(len(regions), 20)} icons...")
+        logger.info(f"⚡ Processing {min(len(regions_list), 20)} icons...")
         
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            for i, (x, y, w, h) in enumerate(regions[:20]):
+            for i, (x, y, w, h) in enumerate(regions_list[:20]):
                 padding = 20
                 x1 = max(0, x - padding)
                 y1 = max(0, y - padding)
