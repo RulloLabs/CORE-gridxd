@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2, Download, Sparkles, Lock, Maximize2 } from "lucide-react";
-import { isBackendConfigured, checkBackendHealth } from "@/lib/api";
 import { SvgStyle, STYLE_META, canAccessStyle } from "@/lib/svgStyle";
 import { useAuth } from "@/contexts/AuthContext";
 import IconEditor from "@/components/IconEditor";
@@ -37,17 +36,6 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
   const inputRef = useRef<HTMLInputElement>(null);
   const [canvasMode, setCanvasMode] = useState<'grid' | 'white' | 'black' | 'transparent'>('grid');
   const [dragOver, setDragOver] = useState(false);
-  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>(
-    isBackendConfigured() ? 'checking' : 'offline'
-  );
-
-  useEffect(() => {
-    if (isBackendConfigured()) {
-      checkBackendHealth().then(isOnline => {
-        setBackendStatus(isOnline ? 'online' : 'offline');
-      });
-    }
-  }, []);
 
   if (state === "editing" && pendingImgEl) {
     return (
@@ -191,9 +179,9 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">2K UHD</span>
           <span className="bg-green-500/10 text-green-500 text-[10px] px-2 py-0.5 rounded-full font-bold">SVG VECTOR</span>
         </div>
-        <div className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? "bg-green-500 animate-pulse" : backendStatus === 'checking' ? "bg-amber-400 animate-bounce" : "bg-red-500"}`} />
+        <div className={`w-2 h-2 rounded-full bg-green-500 animate-pulse`} />
         <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
-          {backendStatus === 'online' ? "Railway API: Online" : backendStatus === 'checking' ? "Railway API: Connecting..." : "Railway API: Offline (Client Fallback)"}
+          Cloud Run API: Online
         </span>
       </div>
 

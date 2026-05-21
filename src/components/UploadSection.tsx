@@ -16,8 +16,13 @@ const UploadSection = () => {
   const [upgradeStyle, setUpgradeStyle] = useState<SvgStyle | null>(null);
 
   const handleDownloadZip = async () => {
-    const { icons, options, visualStyle } = processor;
+    const { icons, options, visualStyle, zipUrl } = processor;
     
+    if (zipUrl) {
+      window.open(zipUrl, '_blank');
+      return;
+    }
+
     if (icons.length === 0) return;
     
     // PRO+ exports all 3 styles, others export selected style only

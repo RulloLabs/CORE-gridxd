@@ -352,8 +352,4 @@ export async function incrementUsage(): Promise<boolean> {
   return true;
 }
 
-export function getProcessingStrategy(info: UserPlanInfo): "client" | "backend" {
-  if (info.plan === "free") return "client";
-  if (!isBackendConfigured()) return "client";
-  return "backend";
-}
+

@@ -143,9 +143,9 @@ export default function Admin() {
             
             <div className="space-y-4">
               <div className="relative group">
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Railway Backend URL (Producción)</label>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Cloud Run API (Producción)</label>
                 <div className="flex">
-                  <input type="text" readOnly value="https://backend-production-aacf.up.railway.app" className="flex-1 px-3 py-2 bg-muted/80 rounded-l-lg border border-border text-xs text-foreground font-mono focus:outline-none" />
+                  <input type="text" readOnly value="https://gridxd-backend-ef6k7awhfa-uc.a.run.app" className="flex-1 px-3 py-2 bg-muted/80 rounded-l-lg border border-border text-xs text-foreground font-mono focus:outline-none" />
                   <button className="px-3 bg-border rounded-r-lg text-xs font-semibold hover:bg-muted-foreground/20">Test</button>
                 </div>
               </div>
