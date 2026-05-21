@@ -213,8 +213,36 @@ async def process_image(
             import json
             try:
                 parsed_regions = json.loads(regions)
-                regions_list = [(r['x'], r['y'], r['w'], r['h']) for r in parsed_regions]
-                logger.info(f"✅ Using {len(regions_list)} regions provided by frontend")
+                img_h, img_w = img_np.shape[:2]
+                
+                for r in parsed_regions:
+                    x = int(r.get('x', 0))
+                    y = int(r.get('y', 0))
+                    w = int(r.get('w', 0))
+                    h = int(r.get('h', 0))
+                    
+                    # 1. Sin coords negativas
+                    x = max(0, x)
+                    y = max(0, y)
+                    
+                    # 2. w/h > 0
+                    if w <= 0 or h <= 0:
+                        continue
+                        
+                    # 3. Que no se salga del canvas
+                    if x + w > img_w:
+                        w = img_w - x
+                    if y + h > img_h:
+                        h = img_h - y
+                        
+                    # Re-verificar después del clamp
+                    if w > 0 and h > 0:
+                        regions_list.append((x, y, w, h))
+                        
+                logger.info(f"✅ Using {len(regions_list)} valid regions provided by frontend")
+                if not regions_list:
+                    logger.warning("⚠️ All provided regions were invalid. Falling back.")
+                    regions_list = detect_icons(img_np)
             except Exception as e:
                 logger.warning(f"⚠️ Failed to parse provided regions: {e}. Falling back to auto-detect.")
                 regions_list = detect_icons(img_np)
