@@ -36,6 +36,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
   const inputRef = useRef<HTMLInputElement>(null);
   const [canvasMode, setCanvasMode] = useState<'grid' | 'white' | 'black' | 'transparent'>('grid');
   const [dragOver, setDragOver] = useState(false);
+  const [previewIcon, setPreviewIcon] = useState<ExtractedIcon | null>(null);
 
   if (state === "editing" && pendingImgEl) {
     return (
@@ -126,6 +127,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                   {icons.map((icon: ExtractedIcon) => (
                     <button 
                       key={icon.id} 
+                      onClick={() => setPreviewIcon(icon)}
                       className="group relative flex flex-col items-center gap-3 transition-transform hover:scale-110 active:scale-95"
                       title={icon.name}
                       aria-label={`Ver detalles del icono ${icon.name}`}
@@ -168,6 +170,44 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           </div>
 
         </div>
+
+        {previewIcon && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setPreviewIcon(null)}>
+            <div className="bg-background border border-border rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setPreviewIcon(null)} className="absolute top-6 right-6 text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 rounded-full p-2 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              <div className="w-32 h-32 mx-auto mb-6 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 p-4 shadow-inner">
+                {previewIcon.svgContent ? (
+                  <div dangerouslySetInnerHTML={{ __html: previewIcon.svgContent }} className="w-full h-full text-foreground drop-shadow-md" />
+                ) : (
+                  <img src={previewIcon.dataUrl} alt={previewIcon.name} className="w-full h-full object-contain drop-shadow-md" />
+                )}
+              </div>
+              <p className="text-center font-black text-xl mb-8 truncate text-foreground tracking-tight">{previewIcon.name.replace('.png', '').replace('.svg', '')}</p>
+              <button 
+                onClick={() => {
+                  const link = document.createElement('a');
+                  if (previewIcon.svgContent) {
+                    const blob = new Blob([previewIcon.svgContent], {type: 'image/svg+xml'});
+                    link.href = URL.createObjectURL(blob);
+                  } else {
+                    link.href = previewIcon.dataUrl;
+                  }
+                  link.download = previewIcon.name;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  setPreviewIcon(null);
+                }}
+                className="w-full premium-button premium-button-primary py-4 flex justify-center gap-2 text-sm"
+              >
+                <Download className="w-5 h-5" /> Descargar Icono
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     );
   }

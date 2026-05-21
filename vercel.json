@@ -1,7 +1,5 @@
 {
   "outputDirectory": "dist",
-  "buildCommand": "",
-  "installCommand": "",
   "rewrites": [
     {
       "source": "/(.*)",

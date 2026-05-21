@@ -10,11 +10,13 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
 
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         <div className="mb-8 flex justify-center">
-          <img
-            src="/LogoMainGRIDXD.png"
-            alt="GridXD"
-            className="w-64 h-64 animate-float object-contain"
-          />
+          <a href="/">
+            <img
+              src="/LogoMainGRIDXD.png"
+              alt="GridXD"
+              className="w-64 h-64 animate-float object-contain hover:scale-105 transition-transform cursor-pointer"
+            />
+          </a>
         </div>
 
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">

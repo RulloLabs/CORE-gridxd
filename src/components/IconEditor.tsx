@@ -290,21 +290,21 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
   return (
     <div className="rounded-2xl border border-primary/30 overflow-hidden shadow-2xl mb-8 bg-black/95">
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3">
+      <div className="fixed sm:relative bottom-0 left-0 right-0 sm:inset-auto z-50 sm:z-10 flex flex-col sm:flex-row items-center justify-between px-4 py-4 sm:py-3 bg-black/95 sm:bg-black/80 backdrop-blur-xl sm:backdrop-blur-sm border-t sm:border-t-0 sm:border-b border-border/30 gap-3 sm:gap-0 pb-8 sm:pb-3 shadow-[0_-20px_40px_rgba(0,0,0,0.8)] sm:shadow-none">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-400/80" />
             <div className="w-3 h-3 rounded-full bg-amber-400/80" />
             <div className="w-3 h-3 rounded-full bg-green-400/80" />
           </div>
-          <span className="text-xs font-bold tracking-widest text-primary uppercase ml-2">
+          <span className="text-xs font-bold tracking-widest text-primary uppercase ml-2 hidden sm:inline">
             ✏️ Editor de Detección
           </span>
           <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
             {regions.length} región{regions.length !== 1 ? "es" : ""}
           </span>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
           <button
             onClick={refineOpticalAdjustment}
             disabled={regions.length === 0 || isRefining}

@@ -16,6 +16,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
   const { plan } = useAuth();
   const generator = useIconGenerator();
   const [dragOver, setDragOver] = useState(false);
+  const [previewIcon, setPreviewIcon] = useState<any | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
@@ -120,13 +121,18 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                 if (file) handleFile(file);
               }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
-              className={`premium-dropzone group ${dragOver ? "premium-dropzone-active" : "premium-dropzone-idle border-white/10 bg-white/[0.02]"}`}
+              tabIndex={0}
+              className={`relative block w-full cursor-pointer rounded-[2rem] border-2 border-dashed p-10 text-center transition-all duration-500 group overflow-hidden ${
+                dragOver 
+                  ? "border-primary bg-primary/10" 
+                  : "border-white/10 bg-white/5 hover:border-primary/20"
+              }`}
             >
               <input 
                 ref={inputRef}
                 type="file" 
                 accept="image/*" 
-                className="hidden" 
+                className="sr-only" 
                 title="Seleccionar archivos"
                 aria-label="Subir logo"
                 onChange={(e) => {
@@ -134,14 +140,15 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                   if (file) handleFile(file);
                 }} 
               />
-              <div className="relative w-16 h-16 mx-auto mb-4 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-colors">
-                <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" aria-hidden="true" />
+              <div className="relative z-10 flex flex-col items-center justify-center gap-4">
+                <div className="relative w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-colors">
+                  <Upload className={`w-8 h-8 transition-colors ${dragOver ? "text-primary animate-bounce" : "text-muted-foreground group-hover:text-primary"}`} aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-foreground font-bold tracking-tight text-lg mb-1">Haz clic o arrastra tu logotipo</p>
+                  <p className="text-muted-foreground text-xs font-medium">SVG, PNG o JPG aceptados</p>
+                </div>
               </div>
-              <p className="text-foreground font-black text-lg mb-1">Carga tu logotipo</p>
-              <p className="text-muted-foreground text-xs font-medium">SVG, PNG o JPG aceptados</p>
-              
-              {/* Scanning effect line */}
-              <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent top-0 animate-shine opacity-0 group-hover:opacity-100" />
             </label>
           </div>
         </div>
@@ -257,7 +264,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
               return (
                 <button 
                   key={icon.id}
-                  onClick={() => isFree && onUpgrade("outline")}
+                  onClick={() => setPreviewIcon(icon)}
                   className="group relative flex flex-col items-center gap-4 transition-all duration-500"
                   aria-label={`Vista previa del icono ${icon.name}`}
                   data-icon-color={primaryColor}
@@ -278,7 +285,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                       )
                     )}
                     
-                    <div className={`relative w-16 h-16 flex items-center justify-center z-10 ${isFree ? "blur-[2px] opacity-40" : ""}`}>
+                    <div className={`relative w-16 h-16 flex items-center justify-center z-10`}>
                       {previewSvg ? (
                         <div 
                            className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
@@ -347,12 +354,12 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                 </button>
               )}
               <button 
-                onClick={() => isFree ? onUpgrade("outline") : generator.downloadPack(projectName, generator.activeStyle)}
+                onClick={() => generator.downloadPack(projectName, generator.activeStyle)}
                 className="premium-button premium-button-primary px-12 group animate-shine animate-pulse"
               >
                 {isFree ? (
                   <>
-                    <Lock className="w-5 h-5 group-hover:scale-110" /> Desbloquear Descarga
+                    <Download className="w-5 h-5 group-hover:animate-bounce" /> Descargar Muestra de Prueba
                   </>
                 ) : (
                   <>
@@ -361,6 +368,51 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {previewIcon && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in text-left" onClick={() => setPreviewIcon(null)}>
+          <div className="bg-background border border-border rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPreviewIcon(null)} className="absolute top-6 right-6 text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 rounded-full p-2 transition-colors z-20">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-32 h-32 mx-auto mb-6 bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 p-5 shadow-inner relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50 pointer-events-none" />
+              {(() => {
+                const pColor = generator.visualStyle?.color_primary || "currentColor";
+                const sWidth = generator.visualStyle?.stroke_width || 2;
+                const pSvg = previewIcon.svgContent ? applyStyleToSvg(previewIcon.svgContent, generator.activeStyle, pColor) : null;
+                return pSvg ? (
+                  <div dangerouslySetInnerHTML={{ __html: pSvg }} className="w-full h-full text-foreground drop-shadow-lg icon-glow-preview relative z-10" />
+                ) : (
+                  <previewIcon.icon className="w-full h-full text-primary drop-shadow-lg relative z-10" strokeWidth={sWidth} />
+                );
+              })()}
+            </div>
+            <p className="text-center font-black text-2xl mb-1 truncate text-foreground tracking-tight">{previewIcon.name}</p>
+            <p className="text-center text-[10px] text-muted-foreground mb-8 font-black uppercase tracking-widest bg-white/5 py-1 px-3 rounded-full w-fit mx-auto">AI Generated Vector</p>
+            
+            <button 
+              onClick={() => {
+                const pColor = generator.visualStyle?.color_primary || "currentColor";
+                const pSvg = previewIcon.svgContent ? applyStyleToSvg(previewIcon.svgContent, generator.activeStyle, pColor) : null;
+                const link = document.createElement('a');
+                if (pSvg) {
+                  const blob = new Blob([pSvg], {type: 'image/svg+xml'});
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `${previewIcon.name}.svg`;
+                }
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setPreviewIcon(null);
+              }}
+              className="w-full premium-button premium-button-primary py-4 flex justify-center gap-2 text-sm animate-shine"
+            >
+              <Download className="w-5 h-5" /> Descargar Icono de Prueba
+            </button>
           </div>
         </div>
       )}
