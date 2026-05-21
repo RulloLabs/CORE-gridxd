@@ -43,6 +43,23 @@ const IconEditor = ({ imgEl, initialRegions, onConfirm, onCancel }: IconEditorPr
     return () => observer.disconnect();
   }, []);
 
+  // Prevent mobile scroll/bounce when dragging/drawing in editor
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (action) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => {
+      container.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [action]);
+
   // Convert natural image px → display px
   const toDisplay = useCallback(
     (x: number, y: number) => ({

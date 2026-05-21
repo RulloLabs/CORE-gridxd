@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Lock, Sparkles, Zap, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { stripeService } from "@/api/stripeService";
 import { STRIPE_PLANS } from "@/lib/stripe-config";
 import { type SvgStyle, STYLE_META } from "@/lib/svgStyle";
 import { toast } from "sonner";
+import AuthModal from "@/components/AuthModal";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -16,13 +17,40 @@ interface UpgradeModalProps {
 const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<"pro" | "proplus" | null>(null);
+
+  // Auto-checkout immediately after successful login/signup
+  useEffect(() => {
+    if (user && pendingPlan) {
+      const checkout = async () => {
+        const planToCheckout = pendingPlan;
+        setPendingPlan(null);
+        setAuthOpen(false);
+        setLoading(true);
+        try {
+          const stripePlan = STRIPE_PLANS[planToCheckout];
+          const url = await stripeService.createCheckoutSession(stripePlan.price_id);
+          if (url) {
+            window.location.href = url;
+            onClose();
+          }
+        } catch (err: any) {
+          toast.error(err.message || "Error al crear sesión de pago");
+        } finally {
+          setLoading(false);
+        }
+      };
+      checkout();
+    }
+  }, [user, pendingPlan, onClose]);
 
   if (!open) return null;
 
   const handleUpgrade = async (planKey: "pro" | "proplus") => {
     if (!user) {
-      toast.error("Inicia sesión para continuar");
-      onClose();
+      setPendingPlan(planKey);
+      setAuthOpen(true);
       return;
     }
 
@@ -31,7 +59,7 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
       const stripePlan = STRIPE_PLANS[planKey];
       const url = await stripeService.createCheckoutSession(stripePlan.price_id);
       if (url) {
-        window.open(url, "_blank");
+        window.location.href = url;
         onClose();
       }
     } catch (err: any) {
@@ -180,6 +208,16 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
           </div>
         </div>
       </div>
+      {/* Auth Modal Overlay */}
+      {authOpen && (
+        <AuthModal
+          open={authOpen}
+          onClose={() => {
+            setAuthOpen(false);
+            setPendingPlan(null);
+          }}
+        />
+      )}
     </>
   );
 };

@@ -30,6 +30,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
 
   // Cast plan to the exact union type expected by canAccessStyle
   const userPlan = (plan as "free" | "pro" | "proplus") ?? "free";
+  const isFree = userPlan === "free";
 
   return (
     <div className="relative glass-card rounded-[3rem] p-8 md:p-16 text-center overflow-hidden">
@@ -193,6 +194,29 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
 
           <StyleCard style={generator.visualStyle} className="mb-12" />
 
+          {isFree && (
+            <div className="mb-12 rounded-[2rem] border border-amber-500/30 bg-amber-500/5 p-8 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex gap-4 items-start text-left max-w-xl relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20 text-amber-500">
+                  <Sparkles className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-lg font-black text-foreground">Generador de IA Avanzado Bloqueado</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Estás viendo una previsualización de iconos de plantilla estándar. Para generar un sistema de iconos vectoriales únicos y personalizados adaptados geométricamente al ADN visual de tu marca utilizando <strong>Gemini SVG Architect</strong>, actualiza a PRO.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onUpgrade("outline")}
+                className="w-full md:w-auto px-8 py-3 rounded-2xl bg-amber-500 text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-amber-500/20 shrink-0 relative z-10 font-bold"
+              >
+                Activar Plan PRO
+              </button>
+            </div>
+          )}
+
           <div className="mb-10 flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5">
             <span className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Variantes de Estilo:</span>
             <div className="flex flex-wrap gap-3">
@@ -233,6 +257,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
               return (
                 <button 
                   key={icon.id}
+                  onClick={() => isFree && onUpgrade("outline")}
                   className="group relative flex flex-col items-center gap-4 transition-all duration-500"
                   aria-label={`Vista previa del icono ${icon.name}`}
                   data-icon-color={primaryColor}
@@ -241,18 +266,24 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     {/* Background Light */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     
-                    {icon.svgContent && (
-                      <div className="absolute top-4 right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-10 shadow-lg shadow-primary/20">
-                        AI
+                    {isFree ? (
+                      <div className="absolute top-4 right-4 px-2 py-0.5 bg-amber-500/20 text-[6px] font-black text-amber-500 rounded-full uppercase tracking-widest z-10 shadow-lg">
+                        Plantilla
                       </div>
+                    ) : (
+                      icon.svgContent && (
+                        <div className="absolute top-4 right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-10 shadow-lg shadow-primary/20">
+                          AI
+                        </div>
+                      )
                     )}
                     
-                    <div className="relative w-16 h-16 flex items-center justify-center z-10">
+                    <div className={`relative w-16 h-16 flex items-center justify-center z-10 ${isFree ? "blur-[2px] opacity-40" : ""}`}>
                       {previewSvg ? (
                         <div 
-                          className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
-                          dangerouslySetInnerHTML={{ __html: previewSvg }}
-                          aria-hidden="true"
+                           className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
+                           dangerouslySetInnerHTML={{ __html: previewSvg }}
+                           aria-hidden="true"
                         />
                       ) : (
                         <icon.icon 
@@ -261,6 +292,12 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                         />
                       )}
                     </div>
+
+                    {isFree && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/10 backdrop-blur-[1px]">
+                        <Lock className="w-5 h-5 text-amber-500/80 drop-shadow-md" />
+                      </div>
+                    )}
 
                     {/* Glass Shine */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/[0.03] to-white/[0.08] pointer-events-none" />
@@ -275,28 +312,33 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
               );
             })}
           </div>
-
           <div className="mt-16 p-8 rounded-[2.5rem] glass-panel border-primary/20 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
             
             <div className="relative z-10 text-center lg:text-left space-y-2">
               <h4 className="text-2xl font-black text-foreground tracking-tight">¿Listo para exportar?</h4>
-              <p className="text-muted-foreground max-w-md">
-                Estás exportando el pack <span className="text-primary font-black uppercase tracking-widest">{generator.activeStyle}</span> optimizado para desarrollo.
+              <p className="text-muted-foreground max-w-md font-medium">
+                {isFree ? (
+                  <span>Para exportar tu sistema de iconos vectoriales generados por IA, necesitas una suscripción.</span>
+                ) : (
+                  <>Estás exportando el pack <span className="text-primary font-black uppercase tracking-widest">{generator.activeStyle}</span> optimizado para desarrollo.</>
+                )}
               </p>
-              <div className="pt-2">
-                <input
-                  type="text"
-                  placeholder="Nombre del proyecto"
-                  value={projectName}
-                  onChange={(e) => setProjectName?.(e.target.value)}
-                  className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-foreground transition-all focus:bg-white/10 placeholder:opacity-30"
-                />
-              </div>
+              {!isFree && (
+                <div className="pt-2">
+                  <input
+                    type="text"
+                    placeholder="Nombre del proyecto"
+                    value={projectName}
+                    onChange={(e) => setProjectName?.(e.target.value)}
+                    className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-foreground transition-all focus:bg-white/10 placeholder:opacity-30"
+                  />
+                </div>
+              )}
             </div>
             
             <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              {userPlan === "proplus" && (
+              {!isFree && userPlan === "proplus" && (
                 <button 
                   onClick={() => generator.downloadPack(projectName, generator.activeStyle, true)}
                   className="premium-button premium-button-outline"
@@ -305,10 +347,18 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                 </button>
               )}
               <button 
-                onClick={() => generator.downloadPack(projectName, generator.activeStyle)}
-                className="premium-button premium-button-primary px-12 group animate-shine"
+                onClick={() => isFree ? onUpgrade("outline") : generator.downloadPack(projectName, generator.activeStyle)}
+                className="premium-button premium-button-primary px-12 group animate-shine animate-pulse"
               >
-                <Download className="w-5 h-5 group-hover:animate-bounce" /> Descargar Sistema
+                {isFree ? (
+                  <>
+                    <Lock className="w-5 h-5 group-hover:scale-110" /> Desbloquear Descarga
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 group-hover:animate-bounce" /> Descargar Sistema
+                  </>
+                )}
               </button>
             </div>
           </div>
