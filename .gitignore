@@ -28,4 +28,15 @@ dist-ssr
 .env.local
 .env.*
 node_modules/
-chat_*.md
+chat_*.md
+
+# Temporary & log files
+lint_output.txt
+run_log.txt
+temp.txt
+
+# Lock files (keep bun.lockb only)
+package-lock.json
+bun.lock
+packages/figma-plugin/package-lock.json
+packages/gridxd-cli/package-lock.json
