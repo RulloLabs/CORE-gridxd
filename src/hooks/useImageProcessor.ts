@@ -195,7 +195,7 @@ export async function extractIconsFromRegions(
     const paddedId = id.toString().padStart(2, "0");
     const resLabel = options.upscale ? "2K" : "HD";
 
-    const svgString = ImageTracer.getSVGString(
+    const svgString = ImageTracer.getsvgstring(
       tempCtx.getImageData(0, 0, sw, sh),
       { ltres: 0.1, qtres: 1, pathomit: 8, colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5 }
     );

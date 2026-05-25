@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders, ALLOWED_ORIGINS } from "../_shared/cors.ts";
 
 // ─── Allowlisted Stripe Price IDs (prevents arbitrary price injection) ────────
 const VALID_PRICE_IDS = new Set([

@@ -284,7 +284,11 @@ export async function getUserPlan(): Promise<UserPlanInfo> {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is 'no rows'
-        logger.error("Error fetching user plan:", error);
+        if (error.code === '406') {
+          logger.warn("Subscribers table not accessible (406) — check Supabase schema migrations");
+        } else {
+          logger.error("Error fetching user plan:", error);
+        }
       }
 
       const today = new Date().toISOString().split("T")[0];

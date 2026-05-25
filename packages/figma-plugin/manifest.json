@@ -12,7 +12,7 @@
   ],
   "networkAccess": {
     "allowedDomains": [
-      "https://gridxd-main-production.up.railway.app",
+      "https://gridxd-backend-ef6k7awhfa-uc.a.run.app",
       "https://cdn.tailwindcss.com",
       "https://fonts.googleapis.com",
       "https://fonts.gstatic.com",

@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Avoid caching foreign API calls/webhooks
-  if (url.hostname.includes('railway.app') || url.hostname.includes('stripe.com')) {
+  if (url.hostname.includes('stripe.com') || url.hostname.includes('a.run.app')) {
     return;
   }
 
