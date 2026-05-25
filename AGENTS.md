@@ -151,3 +151,15 @@ Al finalizar cada sesión de trabajo, agregar un entry aquí:
 - **Verificación:** `lint` 0 errors, `typecheck` 0 errors, `test` 3/4 pass
 - **Commit:** `986f1f8` — fix: correct getsvgstring casing, CORS, Railway URLs, and missing import
 - **Push:** `origin/main` exitoso → Vercel auto-deploy triggereado
+
+### [2026-05-26] Sesión Stripe + UI fixes — opencode
+- **Objetivo:** Arreglar Stripe Edge Functions (500, CORS, console.log, security) y bugs de UI (botones anidados, preview/descarga de iconos)
+- **Cambios:**
+  - `ExtractMode.tsx` + `GenerateMode.tsx` — botones anidados rotos: preview button como overlay absolute + download como sibling + `pointer-events-none` en contenido
+  - `index.css` — `@supports` anidado inválido → `scrollbar-width: none` directo
+  - `customer-portal/index.ts` — reemplazar CORS hardcodeado por `getCorsHeaders()` de `_shared/cors.ts`; eliminar info leak de `error.message`; usar `getSupabaseAdmin()` shared
+  - `create-checkout/index.ts` — eliminar `console.log/error` (x3); usar `getSupabaseAdmin()`; fallback origin corregido a `gridxd.vercel.app`; error genérico (no leak)
+  - `stripe-webhook/index.ts` — `invoice.payment_failed` ahora marca `status: past_due`
+- **Deploy Edge Functions:** `create-checkout`, `customer-portal`, `stripe-webhook`, `check-subscription` desplegadas a Supabase
+- **Commits:** `7d4a4d0` (UI fixes), `880e645` (Stripe refactor)
+- **Pendiente:** Verificar que las env vars `SUPABASE_JWT_SECRET` estén configuradas en Cloud Run para evitar 401 en `/extract-style`
