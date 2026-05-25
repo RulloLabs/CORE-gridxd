@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { getCorsHeaders, ALLOWED_ORIGINS } from "../_shared/cors.ts";
+import { getSupabaseAdmin } from "../_shared/supabase-admin.ts";
 
-// ─── Allowlisted Stripe Price IDs (prevents arbitrary price injection) ────────
 const VALID_PRICE_IDS = new Set([
   Deno.env.get("STRIPE_PRICE_PRO") ?? "",
   Deno.env.get("STRIPE_PRICE_PROPLUS") ?? "",
@@ -16,12 +16,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ── Auth: verify JWT server-side with SERVICE_ROLE_KEY ────────────────────
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -41,7 +36,6 @@ serve(async (req) => {
       });
     }
 
-    // ── Validate priceId against allowlist ──────────────────────────────────
     const body = await req.json();
     const { priceId } = body;
     if (!priceId) {
@@ -63,12 +57,10 @@ serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     const customerId = customers.data[0]?.id;
-    
-    console.log(`Creating checkout session for user: ${user.id}, stripe customer: ${customerId || 'new'}`);
 
     const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
       ? origin
-      : "https://gridxd-core-eta.vercel.app";
+      : "https://gridxd.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -81,16 +73,12 @@ serve(async (req) => {
       subscription_data: { metadata: { supabase_user_id: user.id } },
     });
 
-    console.log(`Checkout session created: ${session.id}`);
-
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("create-checkout error:", message);
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    return new Response(JSON.stringify({ error: "Failed to create checkout session" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

@@ -113,6 +113,15 @@ serve(async (req) => {
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
+        const subId = invoice.subscription as string;
+        const invoiceUserId = invoice.metadata?.supabase_user_id;
+        if (invoiceUserId && subId) {
+          const { error: invoiceError } = await supabase
+            .from("subscribers")
+            .update({ status: "past_due" })
+            .eq("stripe_subscription_id", subId);
+          if (invoiceError) throw invoiceError;
+        }
         break;
       }
     }
