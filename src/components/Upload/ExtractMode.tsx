@@ -132,12 +132,14 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                       key={icon.id}
                       className="group relative flex flex-col items-center gap-2 sm:gap-3 transition-transform hover:scale-105 active:scale-95"
                     >
-                      <button
-                        onClick={() => setPreviewIcon(icon)}
-                        className="relative w-full aspect-square bg-white/5 dark:bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-sm transition-all overflow-hidden hover:border-primary/30 hover:bg-primary/5"
+                      <div className="relative w-full aspect-square bg-white/5 dark:bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-sm transition-all overflow-hidden hover:border-primary/30 hover:bg-primary/5"
                         title={icon.name}
-                        aria-label={`Preview: ${icon.name}`}
                       >
+                        <button
+                          onClick={() => setPreviewIcon(icon)}
+                          className="absolute inset-0 z-10"
+                          aria-label={`Preview: ${icon.name}`}
+                        />
                         {icon.name.includes("_GEN_") && (
                           <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-primary/20 text-[7px] font-black text-primary rounded-[3px] uppercase tracking-wider z-20">
                             AI
@@ -145,7 +147,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                         )}
                         {icon.svgContent ? (
                           <div
-                            className="w-full h-full p-4 sm:p-5 text-foreground transition-colors group-hover:text-primary"
+                            className="w-full h-full p-4 sm:p-5 text-foreground transition-colors group-hover:text-primary pointer-events-none"
                             dangerouslySetInnerHTML={{ __html: icon.svgContent }}
                             aria-hidden="true"
                           />
@@ -153,11 +155,11 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                           <img
                             src={icon.dataUrl}
                             alt={icon.name}
-                            className={`w-full h-full object-contain p-4 sm:p-5 transition-all ${!usedBackend ? "blur-[4px] opacity-40 scale-95" : "group-hover:scale-110"}`}
+                            className={`w-full h-full object-contain p-4 sm:p-5 transition-all pointer-events-none ${!usedBackend ? "blur-[4px] opacity-40 scale-95" : "group-hover:scale-110"}`}
                           />
                         )}
                         {!usedBackend && !icon.svgContent && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[3px]">
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[3px] pointer-events-none">
                             <span title="Activo Bloqueado (Requiere suscripción)">
                               <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-primary drop-shadow-lg" />
                             </span>
@@ -167,7 +169,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                         {/* Individual download overlay on hover */}
                         {icon.svgContent && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); downloadSingleIcon(icon, exportStyle, primaryColor); }}
+                            onClick={() => downloadSingleIcon(icon, exportStyle, primaryColor)}
                             className="absolute bottom-1 right-1 w-7 h-7 rounded-lg bg-primary/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-primary shadow-lg z-20"
                             title="Descargar SVG"
                             aria-label={`Descargar ${icon.name}`}
@@ -175,7 +177,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                             <Download className="w-3.5 h-3.5" />
                           </button>
                         )}
-                      </button>
+                      </div>
                       <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground truncate w-full text-center group-hover:text-foreground transition-colors leading-tight">
                         {icon.name.replace('.png', '').replace('.svg', '')}
                       </p>

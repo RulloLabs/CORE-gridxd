@@ -132,3 +132,22 @@ Al finalizar cada sesión de trabajo, agregar un entry aquí:
 - **Archivos creados:** `_shared/cors.ts`, `_shared/supabase-admin.ts`
 - **Archivos eliminados:** 8 dead code files
 - **Próximos pasos:** Arreglar tests pre-existentes, integrar `src/lib/errors.ts` en componentes, hacer commit y push
+
+### [2026-05-26] Sesión de diagnóstico y fixes — opencode
+- **Objetivo:** Diagnosticar y arreglar errores de runtime reportados: CORS con Railway, `getSVGString is not a function`, Supabase 406, create-checkout 500
+- **Errores diagnosticados:**
+  - **`getSVGString is not a function`** — La librería `imagetracerjs` define el método como `getsvgstring` (minúsculas), no `getSVGString`. Causa: typo de casing.
+  - **CORS Railway** — El preview deploy `audit-app-fixes-status.vercel.app` apuntaba a `backend-production-aacf.up.railway.app` (backend antiguo sin CORS para Vercel). Causa: env vars del preview deploy antiguo; el código actual usa `VITE_GRIDXD_API_URL` y no tiene Railway hardcodeado.
+  - **create-checkout 500** — La Edge Function usaba `ALLOWED_ORIGINS` sin importarlo (solo importaba `getCorsHeaders`). Causa: `ReferenceError` en runtime.
+  - **Supabase 406** — Query a `subscribers` table que probablemente no existe o no tiene RLS configurado en ese proyecto. Causa: migraciones no aplicadas al proyecto Supabase.
+  - **detectRegionsViaWorker timeout** — Worker de detección de regiones excede 15s en imágenes grandes. Causa: timeout normal en imágenes pesadas; ya tiene fallback a full-image.
+- **Cambios:**
+  - `src/hooks/useImageProcessor.ts:198` — `getSVGString` → `getsvgstring`
+  - `public/sw.js:49` — `railway.app` → `a.run.app` (cache bypass)
+  - `packages/figma-plugin/ui.html:104` — Railway → Cloud Run URL
+  - `packages/figma-plugin/manifest.json:15` — Railway → Cloud Run URL
+  - `supabase/functions/create-checkout/index.ts:3` — agregado `ALLOWED_ORIGINS` al import
+  - `src/lib/api.ts:286-291` — logging específico para error code `406`
+- **Verificación:** `lint` 0 errors, `typecheck` 0 errors, `test` 3/4 pass
+- **Commit:** `986f1f8` — fix: correct getsvgstring casing, CORS, Railway URLs, and missing import
+- **Push:** `origin/main` exitoso → Vercel auto-deploy triggereado

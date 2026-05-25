@@ -257,25 +257,28 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                   aria-label={`Vista previa del icono ${icon.name}`}
                   data-icon-color={primaryColor}
                 >
-                  <button
-                    onClick={() => isFree ? onUpgrade("outline") : setPreviewIcon(icon)}
-                    className="relative w-full aspect-square glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center justify-center overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 active:scale-95"
+                  <div className="relative w-full aspect-square glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center justify-center overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 active:scale-95"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <button
+                      onClick={() => isFree ? onUpgrade("outline") : setPreviewIcon(icon)}
+                      className="absolute inset-0 z-10"
+                      aria-label={`Preview: ${icon.name}`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                     {isFree ? (
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-amber-500/20 text-[6px] font-black text-amber-500 rounded-full uppercase tracking-widest z-10 shadow-lg">
+                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-amber-500/20 text-[6px] font-black text-amber-500 rounded-full uppercase tracking-widest z-20 shadow-lg pointer-events-none">
                         Plantilla
                       </div>
                     ) : (
                       icon.svgContent && (
-                        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-10 shadow-lg shadow-primary/20">
+                        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-20 shadow-lg shadow-primary/20 pointer-events-none">
                           AI
                         </div>
                       )
                     )}
 
-                    <div className={`relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center z-10 ${isFree ? "blur-[2px] opacity-40" : ""}`}>
+                    <div className={`relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center z-10 pointer-events-none ${isFree ? "blur-[2px] opacity-40" : ""}`}>
                       {previewSvg ? (
                         <div
                            className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
@@ -291,7 +294,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     </div>
 
                     {isFree && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/10 backdrop-blur-[1px]">
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/10 backdrop-blur-[1px] pointer-events-none">
                         <Lock className="w-5 h-5 text-amber-500/80 drop-shadow-md" />
                       </div>
                     )}
@@ -299,7 +302,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     {/* Individual download overlay on hover (only for non-free) */}
                     {!isFree && icon.svgContent && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); downloadSingleIcon({ svgContent: icon.svgContent, name: icon.name }, generator.activeStyle, primaryColor); }}
+                        onClick={() => downloadSingleIcon({ svgContent: icon.svgContent, name: icon.name }, generator.activeStyle, primaryColor)}
                         className="absolute bottom-2 right-2 w-7 h-7 rounded-lg bg-primary/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-primary shadow-lg z-20"
                         title="Descargar SVG"
                         aria-label={`Descargar ${icon.name}`}
@@ -309,7 +312,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     )}
 
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/[0.03] to-white/[0.08] pointer-events-none" />
-                  </button>
+                  </div>
 
                   <div className="text-center w-full px-1">
                     <span className="block text-[8px] sm:text-[9px] font-black tracking-[0.15em] sm:tracking-[0.25em] text-muted-foreground uppercase transition-colors group-hover:text-foreground truncate">
