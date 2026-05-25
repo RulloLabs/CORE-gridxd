@@ -3,6 +3,9 @@ import { Trash2, Clock, Cpu, Monitor, ChevronDown, ChevronUp, AlertCircle } from
 import { useProcessingHistory } from "@/hooks/useProcessingHistory";
 import { useAuth } from "@/contexts/AuthContext";
 
+const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || "ptwtioobecgrmlwqwbpf";
+const SUPABASE_SQL_URL = `https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/sql/new`;
+
 function formatDate(iso: string) {
   const d = new Date(iso);
   return d.toLocaleString("es-ES", {
@@ -73,7 +76,7 @@ const HistorySection = () => {
                   <p className="text-xs text-muted-foreground mt-1">
                     Ejecuta la migración SQL en{" "}
                     <a
-                      href="https://supabase.com/dashboard/project/ptwtioobecgrmlwqwbpf/sql/new"
+                      href={SUPABASE_SQL_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary underline"

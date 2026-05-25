@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { getSupabaseAdmin } from "../_shared/supabase-admin.ts";
 
 /**
  * GridXD — Stripe Webhook Handler
@@ -16,29 +17,6 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
  *  SUPABASE_URL
  *  SUPABASE_SERVICE_ROLE_KEY
  */
-
-const PRODUCT_TO_PLAN: Record<string, string> = {
-  prod_USRjoaufxAp5xI: "pro",      // Pro en Stripe
-  prod_USRjibmMxLKW3g: "proplus",  // Pro+ en Stripe
-};
-
-
-// ─── Allowed origins (NO wildcard) ────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://gridxd.vercel.app",
-  "https://gridxd-core-eta.vercel.app",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[2];
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
-    "Vary": "Origin",
-  };
-}
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -74,20 +52,13 @@ serve(async (req) => {
     const body = await req.text();
     event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
     return new Response(JSON.stringify({ error: `Webhook error: ${err.message}` }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
-  console.log(`Processing Stripe event: ${event.type}`);
+  const supabase = getSupabaseAdmin();
 
   try {
     switch (event.type) {
@@ -99,20 +70,16 @@ serve(async (req) => {
         const isActive = ["active", "trialing"].includes(sub.status);
         const userId = sub.metadata?.supabase_user_id;
 
-        if (!userId) {
-          console.warn("No supabase_user_id found in subscription metadata");
-          break;
-        }
+        if (!userId) break;
 
-        const plan = isActive ? (PRODUCT_TO_PLAN[productId] ?? "pro") : "free";
+        const plan = isActive ? (Deno.env.get("STRIPE_PRODUCT_PROPLUS") === productId ? "proplus" : "pro") : "free";
 
-        // Upsert subscribers table
         const { error: upsertError } = await supabase
           .from("subscribers")
           .upsert({
             user_id: userId,
             plan: plan,
-            status: sub.status as any,
+            status: sub.status as string,
             stripe_customer_id: customerId,
             stripe_subscription_id: sub.id,
             current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
@@ -120,8 +87,6 @@ serve(async (req) => {
           }, { onConflict: "user_id" });
 
         if (upsertError) throw upsertError;
-
-        console.log(`✅ Updated user ${userId} → plan: ${plan}`);
         break;
       }
 
@@ -131,7 +96,6 @@ serve(async (req) => {
 
         if (!userId) break;
 
-        // Downgrade to free
         const { error: updateError } = await supabase
           .from("subscribers")
           .upsert({
@@ -144,27 +108,19 @@ serve(async (req) => {
           }, { onConflict: "user_id" });
 
         if (updateError) throw updateError;
-
-        console.log(`✅ Downgraded user ${userId} → plan: free`);
         break;
       }
 
       case "invoice.payment_failed": {
-        // Optional: notify user, don't downgrade immediately (Stripe handles dunning)
         const invoice = event.data.object as Stripe.Invoice;
-        console.warn(`⚠️ Payment failed for customer: ${invoice.customer}`);
         break;
       }
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Webhook processing error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

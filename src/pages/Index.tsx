@@ -23,7 +23,7 @@ const EcosystemBanner = () => (
           <BookOpen className="w-8 h-8 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
           <h4 className="font-bold text-foreground mb-2">API REST (Doc)</h4>
           <p className="text-sm text-muted-foreground mb-4">FastAPI con Swagger integrado. Conecta tu backend en minutos.</p>
-          <a href="https://gridxd-main-production.up.railway.app/docs" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-500 hover:underline">Ver Documentación →</a>
+          <a href="/health" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-500 hover:underline">Ver Documentación →</a>
         </div>
         <div className="p-6 rounded-2xl border border-border bg-foreground/5 backdrop-blur hover:bg-foreground/10 transition-colors cursor-pointer group">
           <Figma className="w-8 h-8 text-pink-500 mb-4 group-hover:scale-110 transition-transform" />

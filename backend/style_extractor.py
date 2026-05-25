@@ -9,8 +9,11 @@ import io
 import base64
 import json
 import re
+import logging
 from typing import Optional
 from PIL import Image
+
+logger = logging.getLogger("gridxd")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
@@ -101,7 +104,7 @@ Base your analysis strictly on what you see in the image. Be precise and consist
         return _validate_style(style)
 
     except Exception as e:
-        print(f"[StyleExtractor] Gemini error: {e}. Using defaults.")
+        logger.warning(f"Gemini style extraction error: {e}. Using defaults.")
         return _default_style()
 
 
@@ -159,7 +162,7 @@ def _sanitize_svg(svg_code: str) -> str:
             strip=True
         )
     except ImportError:
-        print("[StyleExtractor] Bleach not found. Using fallback regex sanitization.")
+        logger.warning("Bleach not found. Using fallback regex sanitization.")
         # Remove script tags and their content
         svg_code = re.sub(r"<script.*?>.*?</script>", "", svg_code, flags=re.DOTALL | re.IGNORECASE)
         # Remove event handlers (onmouseover, onload, etc.)
@@ -230,5 +233,5 @@ Ensure the icon is centered and fits within the 24x24 grid.
         return _sanitize_svg(svg_code)
 
     except Exception as e:
-        print(f"[IconGenerator] Gemini error: {e}")
+        logger.error(f"Gemini icon generation error: {e}")
         return ""

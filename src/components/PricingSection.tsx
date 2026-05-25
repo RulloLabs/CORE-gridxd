@@ -122,11 +122,11 @@ const PricingSection = () => {
           Cada minuto recortando iconos es un minuto que no estás diseñando
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 px-4 md:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-6 px-0 md:px-0">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-full snap-center rounded-[2.5rem] p-8 sm:p-10 border transition-all duration-500 hover:-translate-y-2 ${
+              className={`relative w-full rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border transition-all duration-500 hover:-translate-y-2 ${
                 plan.highlighted
                   ? "bg-gradient-to-br from-primary/10 via-card to-background border-primary/50 shadow-2xl shadow-primary/20 scale-105 z-10"
                   : "glass-card border-white/10 hover:border-white/20 shadow-xl"

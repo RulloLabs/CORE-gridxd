@@ -1,11 +1,14 @@
 import os
 import io
+import json
 import uuid
 import zipfile
-from typing import List, Optional
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
+from datetime import datetime, timezone
+from typing import Optional
+from fastapi import FastAPI, UploadFile, File, Form, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import numpy as np
 import cv2
 from PIL import Image
@@ -18,28 +21,56 @@ load_dotenv()
 
 import logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+# Structured JSON logging for better traceability in Cloud Run
+class StructuredFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        log_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": record.levelname,
+            "name": record.name,
+            "message": record.getMessage(),
+        }
+        if hasattr(record, "extra"):
+            log_entry["extra"] = getattr(record, "extra")
+        if record.exc_info and record.exc_info[0]:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_entry)
+
+handler = logging.StreamHandler()
+handler.setFormatter(StructuredFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger("gridxd")
 
 from style_extractor import extract_style, generate_icon_svg
 from auth_middleware import verify_supabase_jwt
 from supabase_service import upload_to_storage
+from app_exceptions import (
+    AppException,
+    UnauthorizedException,
+    RateLimitException,
+    ValidationException,
+    InternalException,
+    ServiceUnavailableException,
+)
+
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 
 app = FastAPI(title="GridXD Processing Backend", version="2.0.0")
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 GridXD Backend starting up...")
-    logger.info(f"SUPABASE_URL configured: {bool(os.environ.get('SUPABASE_URL'))}")
-    logger.info(f"GEMINI_API_KEY configured: {bool(os.environ.get('GEMINI_API_KEY'))}")
-    logger.info(f"SUPABASE_JWT_SECRET configured: {bool(os.environ.get('SUPABASE_JWT_SECRET'))}")
-    if os.environ.get("DEBUG", "false").lower() == "true":
-        logger.warning("⚠️ Running in DEBUG mode. Authentication might be bypassed if JWT_SECRET is missing.")
+    logger.info("GridXD Backend starting up", extra={"event": "startup"})
+    services = {
+        "SUPABASE_URL": bool(os.environ.get("SUPABASE_URL")),
+        "GEMINI_API_KEY": bool(os.environ.get("GEMINI_API_KEY")),
+        "SUPABASE_JWT_SECRET": bool(os.environ.get("SUPABASE_JWT_SECRET")),
+    }
+    for name, configured in services.items():
+        level = "info" if configured else "warning"
+        logger.log(getattr(logging, level.upper()), f"{name} configured: {configured}", extra={"service": name, "configured": configured, "event": "startup"})
+
+    if DEBUG:
+        logger.warning("Running in DEBUG mode", extra={"mode": "debug", "event": "startup"})
 
 # ─── CORS — NO WILDCARD ───────────────────────────────────────────────────────
 ALLOWED_ORIGINS = [
@@ -74,6 +105,42 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
+# ─── Global Error Handler — catches unhandled exceptions ─────────────────────
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    logger.error(
+        f"AppException: {exc.detail.get('code')} — {exc.detail.get('message')}",
+        extra={"status_code": exc.status_code, "code": exc.detail.get("code"), "path": request.url.path},
+    )
+    return JSONResponse(status_code=exc.status_code, content=exc.detail)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(f"Validation error: {exc.errors()}", extra={"path": request.url.path})
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid request",
+            "context": {"errors": exc.errors()},
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {exc}", extra={"path": request.url.path}, exc_info=True)
+    detail = str(exc) if DEBUG else "Internal server error"
+    return JSONResponse(
+        status_code=500,
+        content={
+            "code": "INTERNAL_ERROR",
+            "message": detail,
+        },
+    )
+
+
 def detect_icons(image_np):
     """
     Detect icons using OpenCV contours
@@ -101,14 +168,47 @@ def detect_icons(image_np):
 # ─── Health Check (public — no auth required) ─────────────────────────────────
 @app.get("/health")
 async def health():
-    gemini_configured = bool(os.environ.get("GEMINI_API_KEY"))
-    jwt_configured = bool(os.environ.get("SUPABASE_JWT_SECRET"))
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "")
+    stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
+
+    gemini_configured = bool(gemini_key)
+    jwt_configured = bool(jwt_secret)
+    supabase_configured = bool(supabase_url)
+    stripe_configured = bool(stripe_key)
+
+    # Check if any key is approaching expiration (keys are plain strings, so we can't check expiry)
+    # But we can report configuration status for monitoring
+    services = {
+        "gemini": {
+            "configured": gemini_configured,
+            "status": "ok" if gemini_configured else "missing",
+        },
+        "supabase": {
+            "configured": supabase_configured,
+            "status": "ok" if supabase_configured else "missing",
+        },
+        "stripe": {
+            "configured": stripe_configured,
+            "status": "ok" if stripe_configured else "missing",
+        },
+    }
+
+    overall_status = "ok"
+    for name, svc in services.items():
+        if svc["status"] == "missing":
+            overall_status = "degraded"
+
     return {
-        "status": "ok",
-        "engine": "OpenCV + rembg",
-        "style_ai": "gemini-1.5-flash" if gemini_configured else "disabled (no GEMINI_API_KEY)",
-        "auth": "enabled" if jwt_configured else "disabled (DEBUG mode)",
+        "status": overall_status,
         "version": "2.0.0",
+        "engine": "OpenCV + rembg",
+        "style_ai": "gemini-1.5-flash" if gemini_configured else "disabled",
+        "auth": "enabled" if jwt_configured else "disabled",
+        "mode": "production" if not DEBUG else "debug",
+        "services": services,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -128,9 +228,8 @@ async def extract_style_endpoint(
         style = await extract_style(pil_img)
         return {"style": style, "processed_by": user_id[:8] + "..."}
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Style extraction failed: {e}", exc_info=True, extra={"endpoint": "extract-style"})
+        raise InternalException(message=str(e) if DEBUG else "Style extraction failed")
 
 
 # ─── Icon Generation Endpoint (PROTECTED) ─────────────────────────────────────
@@ -146,22 +245,22 @@ async def generate_icon_endpoint(
     Requires a valid Supabase JWT.
     """
     try:
-        import json
         try:
             dna_dict = json.loads(dna)
         except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="DNA must be a valid JSON string")
-            
+            raise ValidationException(message="DNA must be a valid JSON string", context={"dna": dna[:100]})
+
         svg_code = await generate_icon_svg(icon_name, dna_dict, variant)
 
         if not svg_code:
-            raise HTTPException(status_code=500, detail="Gemini failed to generate SVG")
+            raise InternalException(message="Gemini failed to generate SVG")
 
         return {"svg": svg_code}
+    except AppException:
+        raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Icon generation failed: {e}", exc_info=True, extra={"endpoint": "generate-icon"})
+        raise InternalException(message=str(e) if DEBUG else "Icon generation failed")
 
 
 # ─── Main Processing Endpoint (PROTECTED) ─────────────────────────────────────
@@ -177,93 +276,88 @@ async def process_image(
     user_id: str = Depends(verify_supabase_jwt),
 ):
     try:
-        logger.info(f"📸 Processing image for user: {user_id}")
-        
+        logger.info(f"Processing image for user: {user_id}", extra={"user_id": user_id, "endpoint": "process-image"})
+
         # ── Limit File Size (10MB) ───────────────────────────────────────────
         MAX_SIZE = 10 * 1024 * 1024
         contents = await image.read()
         if len(contents) > MAX_SIZE:
-            logger.error(f"❌ File too large: {len(contents)} bytes")
-            raise HTTPException(status_code=413, detail="Imagen demasiado grande (máx 10MB)")
+            logger.error(f"File too large: {len(contents)} bytes", extra={"size": len(contents), "user_id": user_id})
+            raise ValidationException(message="File too large (max 10MB)")
 
         nparr = np.frombuffer(contents, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if img_np is None:
-            logger.error("❌ Invalid image format")
-            raise HTTPException(status_code=400, detail="Imagen inválida")
+            logger.error("Invalid image format", extra={"user_id": user_id})
+            raise ValidationException(message="Invalid image format")
 
         # ── Style Analysis ───────────────────────────────────────────────────
         style_result = None
         if analyze_style.lower() == "true":
-            logger.info("🎨 Extracting style DNA with Gemini...")
+            logger.info("Extracting style DNA with Gemini...", extra={"user_id": user_id})
             try:
                 pil_for_style = Image.fromarray(cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB))
                 style_result = await extract_style(pil_for_style)
-                logger.info("✅ Style extracted successfully")
+                logger.info("Style extracted successfully", extra={"user_id": user_id})
             except Exception as e:
-                logger.warning(f"⚠️ Style extraction failed: {e}")
-                pass 
+                logger.warning(f"Style extraction failed: {e}", extra={"user_id": user_id})
+                pass
 
         # Detect icons
-        logger.info("🔍 Detecting icons with OpenCV...")
-        
+        logger.info("Detecting icons with OpenCV...", extra={"user_id": user_id})
+
         regions_list = []
         if regions:
-            import json
             try:
                 parsed_regions = json.loads(regions)
                 img_h, img_w = img_np.shape[:2]
-                
+
                 for r in parsed_regions:
                     x = int(r.get('x', 0))
                     y = int(r.get('y', 0))
                     w = int(r.get('w', 0))
                     h = int(r.get('h', 0))
-                    
-                    # 1. Sin coords negativas
+
                     x = max(0, x)
                     y = max(0, y)
-                    
-                    # 2. w/h > 0
+
                     if w <= 0 or h <= 0:
                         continue
-                        
-                    # 3. Que no se salga del canvas
+
                     if x + w > img_w:
                         w = img_w - x
                     if y + h > img_h:
                         h = img_h - y
-                        
-                    # Re-verificar después del clamp
+
                     if w > 0 and h > 0:
                         regions_list.append((x, y, w, h))
-                        
-                logger.info(f"✅ Using {len(regions_list)} valid regions provided by frontend")
+
+                logger.info(f"Using {len(regions_list)} valid regions provided by frontend", extra={"user_id": user_id})
                 if not regions_list:
-                    logger.warning("⚠️ All provided regions were invalid. Falling back.")
+                    logger.warning("All provided regions were invalid. Falling back to auto-detect.", extra={"user_id": user_id})
                     regions_list = detect_icons(img_np)
             except Exception as e:
-                logger.warning(f"⚠️ Failed to parse provided regions: {e}. Falling back to auto-detect.")
+                logger.warning(f"Failed to parse provided regions: {e}. Falling back to auto-detect.", extra={"user_id": user_id})
                 regions_list = detect_icons(img_np)
         else:
             regions_list = detect_icons(img_np)
 
         if not regions_list:
-            logger.info("ℹ️ No specific icons detected, processing full image")
+            logger.info("No specific icons detected, processing full image", extra={"user_id": user_id})
             h, w = img_np.shape[:2]
             regions_list = [(0, 0, w, h)]
         else:
-            logger.info(f"✅ Processing {len(regions_list)} icon regions")
+            logger.info(f"Processing {len(regions_list)} icon regions", extra={"user_id": user_id, "region_count": len(regions_list)})
 
         session_id = str(uuid.uuid4())
         results = []
-        
-        # Memory buffer for the ZIP
+
         zip_buffer = io.BytesIO()
-        
-        logger.info(f"⚡ Processing {min(len(regions_list), 20)} icons...")
-        
+
+        icon_count = min(len(regions_list), 20)
+        logger.info(f"Processing {icon_count} icons...", extra={"user_id": user_id, "icon_count": icon_count})
+
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
             for i, (x, y, w, h) in enumerate(regions_list[:20]):
                 padding = 20
@@ -283,15 +377,13 @@ async def process_image(
                 size = (2048, 2048) if upscale.lower() == "true" else (1024, 1024)
                 roi_processed = roi_processed.resize(size, Image.Resampling.LANCZOS)
 
-                # Save to bytes
                 img_byte_arr = io.BytesIO()
                 roi_processed.save(img_byte_arr, format='PNG')
                 img_bytes = img_byte_arr.getvalue()
 
-                # Upload to Supabase Storage
                 icon_name_file = f"icon_{i+1:02d}.png"
                 storage_path = f"{user_id}/{session_id}/{icon_name_file}"
-                
+
                 public_url = await upload_to_storage(
                     bucket="processed_assets",
                     path=storage_path,
@@ -322,16 +414,14 @@ async def process_image(
         if style_result:
             response["visualStyle"] = style_result
 
+        logger.info(f"Processing complete: {len(results)} icons", extra={"user_id": user_id, "result_count": len(results)})
         return response
 
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        # Do not expose internal error details in production
-        detail = str(e) if os.environ.get("DEBUG", "false").lower() == "true" else "Error interno en el procesamiento de imagen"
-        raise HTTPException(status_code=500, detail=detail)
+        logger.error(f"Image processing failed: {e}", exc_info=True, extra={"user_id": user_id})
+        raise InternalException(message=str(e) if DEBUG else "Internal error during image processing")
 
 
 if __name__ == "__main__":

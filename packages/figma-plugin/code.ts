@@ -47,7 +47,7 @@ figma.ui.onmessage = async (msg) => {
           figma.currentPage.appendChild(svgNode);
           nodes.push(svgNode);
         } catch (err) {
-          console.error("Error inserting SVG:", err);
+          figma.notify("Error inserting SVG", { error: true });
         }
       } else if (icon.image) {
         // Insert as Image (Raster)

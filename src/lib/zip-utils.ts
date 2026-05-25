@@ -4,6 +4,7 @@ import { applyStyleToSvg, SvgStyle, STYLE_META } from "@/lib/svgStyle";
 import { VisualStyle } from "@/lib/api";
 import JSZip from "jszip";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 export interface ZipExportOptions {
   projectName: string;
@@ -123,8 +124,44 @@ gridxd.io - Professional Icon Extraction & Generation`;
     URL.revokeObjectURL(url);
     toast.success("Descarga completada correctamente");
   } catch (error) {
-    console.error("Error generating ZIP:", error);
+    logger.error("Error generating ZIP: %o", error);
     toast.error("Hubo un error al generar el archivo ZIP. Por favor, inténtalo de nuevo.");
+  }
+}
+
+/**
+ * Download a single icon as SVG (with style applied) or PNG.
+ */
+export async function downloadSingleIcon(
+  data: { svgContent?: string; dataUrl?: string; name: string },
+  style: SvgStyle,
+  primaryColor: string = "#7c3aed"
+) {
+  const baseName = data.name.replace(/\.(png|svg)$/, "");
+
+  // Prefer SVG download — cleaner for vector assets
+  if (data.svgContent) {
+    const styledSvg = applyStyleToSvg(data.svgContent, style, primaryColor);
+    const blob = new Blob([styledSvg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${baseName}.${style}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  // Fallback: download PNG
+  if (data.dataUrl) {
+    const a = document.createElement("a");
+    a.href = data.dataUrl;
+    a.download = `${baseName}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
 
@@ -192,7 +229,7 @@ gridxd.io — Design Intelligence`;
     URL.revokeObjectURL(url);
     toast.success("Descarga del sistema completada correctamente");
   } catch (error) {
-    console.error("Error generating ZIP:", error);
+    logger.error("Error generating ZIP: %o", error);
     toast.error("Hubo un error al generar el archivo ZIP. Por favor, inténtalo de nuevo.");
   }
 }

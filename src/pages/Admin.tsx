@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { LineChart, Users, Key, Settings, Activity, ShieldCheck, Download, Server } from "lucide-react";
+
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "";
+const CLOUD_RUN_URL = import.meta.env.VITE_CLOUD_RUN_URL || "https://gridxd-backend-ef6k7awhfa-uc.a.run.app";
 
 export default function Admin() {
   const { session, user } = useAuth();
@@ -17,8 +21,7 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    // Verificar si es Admin
-    if (!loading && (!user || user.email !== "iberusdelasierra@gmail.com")) {
+    if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
       navigate("/");
     }
   }, [user, loading, navigate]);
@@ -37,20 +40,20 @@ export default function Admin() {
           });
         }
       } catch (err) {
-        console.error("Error fetching metrics", err);
+        logger.error("Error fetching metrics: %o", err);
       } finally {
         setLoading(false);
       }
     }
 
-    if (user?.email === "iberusdelasierra@gmail.com") {
+    if (user?.email === ADMIN_EMAIL) {
       loadMetrics();
     } else {
       setLoading(false);
     }
   }, [user]);
 
-  if (loading || user?.email !== "iberusdelasierra@gmail.com") {
+  if (loading || user?.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <Activity className="w-8 h-8 animate-spin text-primary" />
@@ -145,14 +148,14 @@ export default function Admin() {
               <div className="relative group">
                 <label className="text-xs font-semibold text-muted-foreground mb-1 block">Cloud Run API (Producción)</label>
                 <div className="flex">
-                  <input type="text" readOnly value="https://gridxd-backend-ef6k7awhfa-uc.a.run.app" className="flex-1 px-3 py-2 bg-muted/80 rounded-l-lg border border-border text-xs text-foreground font-mono focus:outline-none" />
+                  <input type="text" readOnly value={CLOUD_RUN_URL} className="flex-1 px-3 py-2 bg-muted/80 rounded-l-lg border border-border text-xs text-foreground font-mono focus:outline-none" />
                   <button className="px-3 bg-border rounded-r-lg text-xs font-semibold hover:bg-muted-foreground/20">Test</button>
                 </div>
               </div>
 
-              <div className="relative group">
+                  <div className="relative group">
                 <label className="text-xs font-semibold text-muted-foreground mb-1 block">Stripe Webhook Secret</label>
-                <input type="password" value="whsec_XXXXXXXXXXXXXXXXXXXXX" readOnly className="w-full px-3 py-2 bg-muted/80 rounded border border-border text-xs text-foreground font-mono focus:outline-none" />
+                <input type="password" value="••••••••••••••••" readOnly className="w-full px-3 py-2 bg-muted/80 rounded border border-border text-xs text-foreground font-mono focus:outline-none" />
               </div>
 
               <div className="relative group">

@@ -35,6 +35,23 @@ lint_output.txt
 run_log.txt
 temp.txt
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Supabase
+supabase/.temp/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test artifacts
+.vite-temp/
+
 # Lock files (keep bun.lockb only)
 package-lock.json
 bun.lock

@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
-import { User, LogOut, Sun, Moon, Volume2, VolumeX } from "lucide-react";
+import { useState } from "react";
+import { User, Volume2, VolumeX } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/AuthModal";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
 import UserMenu from "@/components/UserMenu";
@@ -11,30 +10,19 @@ import ThemeToggle from "@/components/ThemeToggle";
 const Header = () => {
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
   const [isSoundOn, setIsSoundOn] = useState(true);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.classList.add("light");
-    }
-  }, [isDark]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
       {/* Brand — horizontal lockup: logo + wordmark */}
-      <a href="#hero" className="flex items-center gap-3 group">
+      <a href="#hero" className="flex items-center gap-2 sm:gap-3 group">
         <img
           src="/LogoMainGRIDXD.png"
           alt="GridXD"
-          className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+          className="w-8 h-8 sm:w-10 sm:h-10 object-contain transition-transform group-hover:scale-110"
         />
         <div className="flex flex-col leading-none">
-          <span className="text-sm font-black tracking-tight text-foreground uppercase group-hover:text-primary transition-colors">GridXD</span>
+          <span className="text-xs sm:text-sm font-black tracking-tight text-foreground uppercase group-hover:text-primary transition-colors">GridXD</span>
           <span className="text-[10px] font-medium text-muted-foreground tracking-wider hidden sm:block">Design Intelligence</span>
         </div>
       </a>
@@ -45,7 +33,7 @@ const Header = () => {
         {/* Toggle Sound */}
         <button
           onClick={() => setIsSoundOn(!isSoundOn)}
-          className="p-2.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+          className="hidden sm:flex p-2.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
           title={isSoundOn ? "Silenciar" : "Activar sonido"}
         >
           {isSoundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

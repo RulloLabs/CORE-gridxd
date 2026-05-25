@@ -51,8 +51,8 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
 
       toast.success("Perfil actualizado correctamente");
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || "Error al actualizar perfil");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al actualizar perfil");
     } finally {
       setLoading(false);
     }
@@ -67,8 +67,8 @@ const ProfileModal = ({ open, onClose }: ProfileModalProps) => {
       const url = await authService.uploadAvatar(user.id, file);
       setAvatarUrl(url);
       toast.success("Avatar subido");
-    } catch (err: any) {
-      toast.error(err.message || "Error al subir imagen");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al subir imagen");
     } finally {
       setUploading(false);
     }

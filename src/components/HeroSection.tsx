@@ -18,7 +18,7 @@ const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
         </div>
 
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">
-          <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">GridXD</span>
+          <span className="text-foreground dark:text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">GridXD</span>
         </h1>
 
         <p className="text-xl md:text-2xl font-bold text-foreground mb-4">

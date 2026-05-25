@@ -69,11 +69,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [checkSubscription]);
 
-  // Auto-refresh subscription every 60s
+  // Auto-refresh subscription only when page is visible
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(checkSubscription, 60_000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkSubscription, 5 * 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkSubscription();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [user, checkSubscription]);
 
   return (

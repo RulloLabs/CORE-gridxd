@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gridxd-v2';
+const CACHE_NAME = 'gridxd-v3';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

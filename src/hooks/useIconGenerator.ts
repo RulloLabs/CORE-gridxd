@@ -161,7 +161,7 @@ export function useIconGenerator() {
         compress: true
       });
     } catch (err) {
-      console.error("Download error:", err);
+      logger.error("Download error: %o", err);
       setError("No se pudo generar el archivo de descarga.");
     }
   };

@@ -15,27 +15,13 @@ describe("Region Detector", () => {
       data[i + 3] = 255;
     }
 
-    // Draw a black square from (2,2) to (5,5)
-    for (let y = 2; y <= 5; y++) {
-      for (let x = 2; x <= 5; x++) {
-        const idx = (y * width + x) * 4;
-        data[idx] = 0;
-        data[idx + 1] = 0;
-        data[idx + 2] = 0;
-      }
-    }
-
-    // Since the minSize constraint and count checks in regionDetector are:
-    // const minSize = Math.min(width, height) * 0.05; -> 0.5
-    // if (count > 20)
-    // For a 4x4 black square, the count will be 16. It will be ignored if count <= 20.
-    // So let's make a bigger black square: 6x6 -> 36 count
+    // Draw a gray square from (2,2) to (7,7) — brightness = 128 (within detectable range 25-230)
     for (let y = 2; y <= 7; y++) {
       for (let x = 2; x <= 7; x++) {
         const idx = (y * width + x) * 4;
-        data[idx] = 0;
-        data[idx + 1] = 0;
-        data[idx + 2] = 0;
+        data[idx] = 128;
+        data[idx + 1] = 128;
+        data[idx + 2] = 128;
       }
     }
 

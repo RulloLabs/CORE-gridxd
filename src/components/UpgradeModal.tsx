@@ -35,8 +35,8 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
             window.location.href = url;
             onClose();
           }
-        } catch (err: any) {
-          toast.error(err.message || "Error al crear sesión de pago");
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : "Error al crear sesión de pago");
         } finally {
           setLoading(false);
         }
@@ -62,8 +62,8 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
         window.location.href = url;
         onClose();
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error al crear sesión de pago");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al crear sesión de pago");
     } finally {
       setLoading(false);
     }

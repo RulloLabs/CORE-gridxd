@@ -9,6 +9,7 @@
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { AppError, ErrorCode, classifyApiError } from "@/lib/errors";
 
 const API_BASE_URL = import.meta.env.VITE_GRIDXD_API_URL || "";
 
@@ -138,7 +139,7 @@ export async function processImageBackend(
     const errorData = await response
       .json()
       .catch(() => ({ detail: "Backend server error" })) as { detail?: string };
-    throw new Error(errorData.detail || `Error ${response.status}`);
+    throw classifyApiError(new Error(errorData.detail || `Error ${response.status}`), "processImageBackend");
   }
 
   const raw = await response.json();
@@ -205,7 +206,7 @@ export async function extractStyleFromBackend(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      logger.warn("Style extraction backend error:", response.status, "— using fallback");
+      logger.warn("Style extraction backend error: %s — using fallback", response.status);
       return fallback;
     }
 
