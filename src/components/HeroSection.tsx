@@ -1,12 +1,12 @@
 const HeroSection = ({ onGetStarted }: { onGetStarted: () => void }) => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
+    <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
       {/* Background grid pattern */}
       <div className="absolute inset-0 opacity-[0.04] hero-bg-grid" />
 
-      {/* Glow orbs - Softer for light mode */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-[120px] animate-pulse-glow opacity-50" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-secondary/5 blur-[120px] animate-pulse-glow opacity-50 [animation-delay:1s]" />
+      {/* Glow orbs - Only visible in dark mode to prevent ugly shadows in light mode */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[120px] animate-pulse-glow opacity-0 dark:opacity-50" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-secondary/10 blur-[120px] animate-pulse-glow opacity-0 dark:opacity-50 [animation-delay:1s]" />
 
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         <div className="mb-8 flex justify-center">
