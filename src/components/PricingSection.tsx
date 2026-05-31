@@ -5,6 +5,7 @@ import { stripeService } from "@/api/stripeService";
 import { STRIPE_PLANS } from "@/lib/stripe-config";
 import AuthModal from "@/components/AuthModal";
 import { toast } from "sonner";
+import { analyticsService } from "@/api/analyticsService";
 
 const plans = [
   {
@@ -95,6 +96,8 @@ const PricingSection = () => {
 
     setLoadingPlan(planKey);
     try {
+      analyticsService.trackEvent('checkout_started', { plan: planKey });
+      
       const url = await stripeService.createCheckoutSession(stripePlan.price_id);
       if (url) {
         window.location.href = url;

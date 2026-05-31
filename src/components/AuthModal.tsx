@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { analyticsService } from "@/api/analyticsService";
 import { supabase } from "@/integrations/supabase/client";
 import { authService } from "@/api/authService";
 
@@ -17,8 +18,20 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   if (!open) return null;
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      analyticsService.trackEvent('login_started', { provider: 'google' });
+      await authService.signInWithGoogle();
+    } catch (err: any) {
+      toast.error(err.message || "Error al iniciar sesión con Google");
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

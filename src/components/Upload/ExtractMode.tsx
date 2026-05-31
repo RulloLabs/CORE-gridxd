@@ -317,7 +317,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
         onDrop={(e) => { e.preventDefault(); setDragOver(false); const files = Array.from(e.dataTransfer.files); if (files.length > 0) processImages(files); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
         tabIndex={0}
-        className={`relative block w-full cursor-pointer rounded-[1.5rem] sm:rounded-[2rem] border-2 border-dashed p-6 sm:p-10 text-center transition-all duration-500 group overflow-hidden ${
+        className={`relative block w-full cursor-pointer rounded-[1.5rem] sm:rounded-[2rem] border-2 border-dashed p-6 sm:p-10 text-center transition-all duration-300 group overflow-hidden active:scale-[0.98] ${
           dragOver
             ? "border-primary bg-primary/10"
             : "border-white/10 bg-white/5 hover:border-primary/20"
