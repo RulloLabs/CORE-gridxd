@@ -10,12 +10,13 @@ export const ALLOWED_ORIGINS = [
 ];
 
 export function getCorsHeaders(origin: string | null) {
-  const allowed =
-    origin && ALLOWED_ORIGINS.includes(origin)
-      ? origin
-      : "https://gridxd.vercel.app";
+  const isAllowed =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+     origin.endsWith(".vercel.app") ||
+     origin.endsWith(".localhost"));
   return {
-    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Origin": isAllowed ? origin! : "https://gridxd.vercel.app",
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, stripe-signature",
     Vary: "Origin",
