@@ -15,19 +15,17 @@ serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
+      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
       });
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid or expired session" }), {
+      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
       });
     }
 
@@ -37,7 +35,11 @@ serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (subError) throw subError;
+    if (subError) {
+      return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!subData || (subData.status !== "active" && subData.status !== "trialing")) {
       return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
@@ -53,12 +55,9 @@ serve(async (req: Request) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    return new Response(JSON.stringify({ subscribed: false, plan: "free" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
     });
   }
 });
-

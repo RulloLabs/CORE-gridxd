@@ -29,17 +29,13 @@ const UserMenu = () => {
 
   const handlePortal = async () => {
     setIsPortalLoading(true);
-    try {
-      const url = await stripeService.createPortalSession();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err: unknown) {
-      const error = err as Error;
-      toast.error(error.message || "Error al abrir el portal de facturación");
-    } finally {
-      setIsPortalLoading(false);
+    const { url, error } = await stripeService.createPortalSession();
+    if (url) {
+      window.location.href = url;
+    } else if (error) {
+      toast.error(error);
     }
+    setIsPortalLoading(false);
   };
 
   return (

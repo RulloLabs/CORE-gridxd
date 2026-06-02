@@ -28,18 +28,15 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
         setPendingPlan(null);
         setAuthOpen(false);
         setLoading(true);
-        try {
-          const stripePlan = STRIPE_PLANS[planToCheckout];
-          const url = await stripeService.createCheckoutSession(stripePlan.price_id);
-          if (url) {
-            window.location.href = url;
-            onClose();
-          }
-        } catch (err: unknown) {
-          toast.error(err instanceof Error ? err.message : "Error al crear sesión de pago");
-        } finally {
-          setLoading(false);
+        const stripePlan = STRIPE_PLANS[planToCheckout];
+        const { url, error } = await stripeService.createCheckoutSession(stripePlan.price_id);
+        if (url) {
+          window.location.href = url;
+          onClose();
+        } else if (error) {
+          toast.error(error);
         }
+        setLoading(false);
       };
       checkout();
     }
@@ -55,18 +52,15 @@ const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalPr
     }
 
     setLoading(true);
-    try {
-      const stripePlan = STRIPE_PLANS[planKey];
-      const url = await stripeService.createCheckoutSession(stripePlan.price_id);
-      if (url) {
-        window.location.href = url;
-        onClose();
-      }
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Error al crear sesión de pago");
-    } finally {
-      setLoading(false);
+    const stripePlan = STRIPE_PLANS[planKey];
+    const { url, error } = await stripeService.createCheckoutSession(stripePlan.price_id);
+    if (url) {
+      window.location.href = url;
+      onClose();
+    } else if (error) {
+      toast.error(error);
     }
+    setLoading(false);
   };
 
   const meta = STYLE_META[blockedStyle];

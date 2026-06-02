@@ -77,17 +77,13 @@ const PricingSection = () => {
     // If already on a paid plan, redirect to portal for upgrade/downgrade
     if (currentPlan !== "free") {
       setLoadingPlan(planKey);
-      try {
-        const url = await stripeService.createPortalSession();
-        if (url) {
-          window.location.href = url;
-        }
-      } catch (err: unknown) {
-        const error = err as Error;
-        toast.error(error.message || "Error al abrir portal de suscripción");
-      } finally {
-        setLoadingPlan(null);
+      const { url, error } = await stripeService.createPortalSession();
+      if (url) {
+        window.location.href = url;
+      } else if (error) {
+        toast.error(error);
       }
+      setLoadingPlan(null);
       return;
     }
 
@@ -95,19 +91,14 @@ const PricingSection = () => {
     if (!stripePlan) return;
 
     setLoadingPlan(planKey);
-    try {
-      analyticsService.trackEvent('checkout_started', { plan: planKey });
-      
-      const url = await stripeService.createCheckoutSession(stripePlan.price_id);
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err: unknown) {
-      const error = err as Error;
-      toast.error(error.message || "Error al crear sesión de pago");
-    } finally {
-      setLoadingPlan(null);
+    analyticsService.trackEvent('checkout_started', { plan: planKey });
+    const { url, error } = await stripeService.createCheckoutSession(stripePlan.price_id);
+    if (url) {
+      window.location.href = url;
+    } else if (error) {
+      toast.error(error);
     }
+    setLoadingPlan(null);
   };
 
   const isCurrentPlan = (planKey: string | null) => {

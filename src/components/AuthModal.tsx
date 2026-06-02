@@ -27,8 +27,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
     try {
       analyticsService.trackEvent('login_started', { provider: 'google' });
       await authService.signInWithGoogle();
-    } catch (err: any) {
-      toast.error(err.message || "Error al iniciar sesión con Google");
+    } catch {
+      toast.error("Error al iniciar sesión con Google");
       setIsGoogleLoading(false);
     }
   };

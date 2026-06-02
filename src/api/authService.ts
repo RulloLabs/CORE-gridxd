@@ -101,11 +101,15 @@ export const authService = {
    * Check user subscription status
    */
   async checkSubscription() {
-    const { data, error } = await supabase.functions.invoke("check-subscription");
-    if (error) throw error;
-    return {
-      subscribed: data.subscribed ?? false,
-      plan: data.plan ?? "free"
-    };
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) return { subscribed: false, plan: "free" as const };
+      return {
+        subscribed: data?.subscribed ?? false,
+        plan: data?.plan ?? "free"
+      };
+    } catch {
+      return { subscribed: false, plan: "free" as const };
+    }
   }
 };

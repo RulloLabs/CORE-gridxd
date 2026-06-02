@@ -1,48 +1,33 @@
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Service to handle Stripe operations.
- * Abstracts Supabase Edge Function calls to make backend migration trivially easy.
- */
 export const stripeService = {
-  /**
-   * Creates a Stripe Checkout Session for a specific plan
-   * @param priceId The Stripe price ID
-   * @returns The checkout URL
-   */
-  async createCheckoutSession(priceId: string): Promise<string> {
-    const { data, error } = await supabase.functions.invoke("create-checkout", {
-      body: { priceId, returnUrl: window.location.origin },
-    });
+  async createCheckoutSession(priceId: string): Promise<{ url: string | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId, returnUrl: window.location.origin },
+      });
 
-    if (error) {
-      throw new Error(error.message || "Error al crear sesión de pago");
+      if (error) return { url: null, error: "El servicio de pagos no está disponible ahora. Intenta más tarde." };
+      if (!data?.url) return { url: null, error: "No se recibió URL de checkout válida." };
+
+      return { url: data.url, error: null };
+    } catch {
+      return { url: null, error: "Error de conexión con el servicio de pagos." };
     }
-
-    if (!data?.url) {
-      throw new Error("No se recibió URL de checkout válida");
-    }
-
-    return data.url;
   },
 
-  /**
-   * Creates a Stripe Customer Portal Session for managing subscriptions
-   * @returns The portal URL
-   */
-  async createPortalSession(): Promise<string> {
-    const { data, error } = await supabase.functions.invoke("customer-portal", {
-      body: { returnUrl: window.location.origin },
-    });
+  async createPortalSession(): Promise<{ url: string | null; error: string | null }> {
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        body: { returnUrl: window.location.origin },
+      });
 
-    if (error) {
-      throw new Error(error.message || "Error al acceder al portal de gestión");
+      if (error) return { url: null, error: "El portal de suscripción no está disponible ahora." };
+      if (!data?.url) return { url: null, error: "No se recibió URL del portal." };
+
+      return { url: data.url, error: null };
+    } catch {
+      return { url: null, error: "Error de conexión con el portal de suscripción." };
     }
-
-    if (!data?.url) {
-      throw new Error("No se recibió URL de portal válida");
-    }
-
-    return data.url;
   },
 };

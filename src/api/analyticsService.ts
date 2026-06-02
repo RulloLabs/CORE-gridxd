@@ -7,7 +7,7 @@ export const analyticsService = {
   /**
    * Tracks an event in the analytics_events table
    */
-  async trackEvent(eventName: string, metadata: Record<string, any> = {}) {
+  async trackEvent(eventName: string, metadata: Record<string, unknown> = {}) {
     try {
       // Get current user if available to attach to the event
       const { data: { session } } = await supabase.auth.getSession();
