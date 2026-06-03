@@ -2,7 +2,7 @@
  * Shared Supabase admin client for Edge Functions.
  * Uses SERVICE_ROLE_KEY — only use in trusted server-side contexts.
  */
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 export function getSupabaseAdmin() {
   return createClient(

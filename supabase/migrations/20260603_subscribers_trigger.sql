@@ -13,4 +13,4 @@ DROP TRIGGER IF EXISTS on_auth_user_created_subscriber ON auth.users;
 
 CREATE TRIGGER on_auth_user_created_subscriber
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_subscriber();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_subscriber();
