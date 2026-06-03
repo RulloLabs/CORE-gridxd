@@ -170,3 +170,11 @@ Al finalizar cada sesión de trabajo, agregar un entry aquí:
   - **Cloud Run / Supabase:** Obtenido el Legacy JWT Secret desde Supabase Dashboard y agregado como variable de entorno `SUPABASE_JWT_SECRET` en el servicio `gridxd-backend` en Google Cloud Run. Realizado un redeploy exitoso.
   - **Stripe Webhook:** Creado endpoint apuntando a `https://ptwtioobecgrmlwqwbpf.supabase.co/functions/v1/stripe-webhook` con los eventos `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
 - **Verificación:** Probado login en la app en `gridxd.vercel.app`, probada extracción exitosa de iconos, confirmando que el frontend se conecta y autoriza correctamente con el backend.
+
+### [2026-06-03] Resolución Errores Producción — opencode
+- **Objetivo:** Resolver errores 401 en Cloud Run, 500 en Stripe Edge Functions, 406 en tabla subscribers y políticas CSP estrictas.
+- **Cambios:**
+  - `vercel.json` — modificada CSP `img-src` para permitir `https://*.googleusercontent.com` y solucionar bloqueo de avatares.
+  - `20260603_subscribers_trigger.sql` — migración creada con un trigger para insertar automáticamente a nuevos usuarios en `subscribers` con plan `free`, resolviendo el error 406.
+  - **Cloud Run / Supabase:** Actualizado el secreto JWT real desde Supabase en Cloud Run (`SUPABASE_JWT_SECRET`) y redesplegado. Verificada `STRIPE_SECRET_KEY` en Edge Functions.
+- **Verificación:** `lint` y `typecheck` ok. Agente de navegador verificó el despliegue en producción sin errores 401 ni 500.
