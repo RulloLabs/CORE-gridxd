@@ -163,3 +163,10 @@ Al finalizar cada sesión de trabajo, agregar un entry aquí:
 - **Deploy Edge Functions:** `create-checkout`, `customer-portal`, `stripe-webhook`, `check-subscription` desplegadas a Supabase
 - **Commits:** `7d4a4d0` (UI fixes), `880e645` (Stripe refactor)
 - **Pendiente:** Verificar que las env vars `SUPABASE_JWT_SECRET` estén configuradas en Cloud Run para evitar 401 en `/extract-style`
+
+### [2026-06-02] Configuración de Cloud Run y Stripe — opencode
+- **Objetivo:** Configurar `SUPABASE_JWT_SECRET` en Cloud Run, configurar el webhook de Stripe y probar el flujo completo en producción.
+- **Cambios:**
+  - **Cloud Run / Supabase:** Obtenido el Legacy JWT Secret desde Supabase Dashboard y agregado como variable de entorno `SUPABASE_JWT_SECRET` en el servicio `gridxd-backend` en Google Cloud Run. Realizado un redeploy exitoso.
+  - **Stripe Webhook:** Creado endpoint apuntando a `https://ptwtioobecgrmlwqwbpf.supabase.co/functions/v1/stripe-webhook` con los eventos `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+- **Verificación:** Probado login en la app en `gridxd.vercel.app`, probada extracción exitosa de iconos, confirmando que el frontend se conecta y autoriza correctamente con el backend.
