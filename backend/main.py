@@ -171,15 +171,11 @@ async def health():
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
     supabase_url = os.environ.get("SUPABASE_URL", "")
     jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "")
-    stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
 
     gemini_configured = bool(gemini_key)
     jwt_configured = bool(jwt_secret)
     supabase_configured = bool(supabase_url)
-    stripe_configured = bool(stripe_key)
 
-    # Check if any key is approaching expiration (keys are plain strings, so we can't check expiry)
-    # But we can report configuration status for monitoring
     services = {
         "gemini": {
             "configured": gemini_configured,
@@ -189,14 +185,10 @@ async def health():
             "configured": supabase_configured,
             "status": "ok" if supabase_configured else "missing",
         },
-        "stripe": {
-            "configured": stripe_configured,
-            "status": "ok" if stripe_configured else "missing",
-        },
     }
 
     overall_status = "ok"
-    for name, svc in services.items():
+    for svc in services.values():
         if svc["status"] == "missing":
             overall_status = "degraded"
 
@@ -208,6 +200,7 @@ async def health():
         "auth": "enabled" if jwt_configured else "disabled",
         "mode": "production" if not DEBUG else "debug",
         "services": services,
+        "notes": "Stripe is handled by Edge Functions, not this backend",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
