@@ -31,13 +31,16 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
     detectedRegions,
     confirmRegions,
     pendingImgEl,
-    options
+    options,
+    renameIcon
   } = processor;
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [canvasMode, setCanvasMode] = useState<'grid' | 'white' | 'black' | 'transparent'>('grid');
   const [dragOver, setDragOver] = useState(false);
   const [previewIcon, setPreviewIcon] = useState<ExtractedIcon | null>(null);
+  const [editingNameId, setEditingNameId] = useState<number | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
 
   const primaryColor = visualStyle?.color_primary || "#7c3aed";
 
@@ -178,9 +181,37 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                           </button>
                         )}
                       </div>
-                      <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground truncate w-full text-center group-hover:text-foreground transition-colors leading-tight">
-                        {icon.name.replace('.png', '').replace('.svg', '')}
-                      </p>
+                      {editingNameId === icon.id ? (
+                        <input
+                          type="text"
+                          value={editNameValue}
+                          onChange={(e) => setEditNameValue(e.target.value)}
+                          onBlur={() => {
+                            if (editNameValue.trim()) renameIcon(icon.id, editNameValue.trim());
+                            setEditingNameId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (editNameValue.trim()) renameIcon(icon.id, editNameValue.trim());
+                              setEditingNameId(null);
+                            }
+                            if (e.key === "Escape") setEditingNameId(null);
+                          }}
+                          autoFocus
+                          className="w-full text-[9px] sm:text-[10px] font-bold text-center bg-foreground/10 border border-primary/40 rounded px-1 py-0.5 outline-none text-foreground"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingNameId(icon.id);
+                            setEditNameValue(icon.name.replace('.png', '').replace('.svg', ''));
+                          }}
+                          className="w-full text-[9px] sm:text-[10px] font-bold text-muted-foreground truncate text-center hover:text-foreground transition-colors leading-tight cursor-text"
+                        >
+                          {icon.name.replace('.png', '').replace('.svg', '')}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -270,43 +301,14 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
             <span className="text-[9px] font-black uppercase tracking-[0.3em] bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg">{plan} access</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 h-full">
-            {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
-              const locked = !canAccessStyle(plan as "free" | "pro" | "proplus", s);
-              const active = exportStyle === s;
-              return (
-                <button
-                  key={s}
-                  onClick={() => locked ? onUpgrade(s) : setExportStyle(s)}
-                  className={`relative group flex flex-col items-center justify-center gap-3 sm:gap-5 p-4 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border-2 transition-all duration-700 ${
-                    locked
-                      ? "bg-black/40 border-white/5 opacity-40 grayscale cursor-not-allowed"
-                      : active
-                        ? "border-primary bg-primary/10 shadow-2xl shadow-primary/20 scale-[1.02]"
-                        : "bg-white/5 border-white/10 hover:border-primary/40 hover:bg-white/10"
-                  }`}
-                >
-                  <span className={`text-3xl sm:text-4xl lg:text-6xl transition-all duration-700 ${active && !locked ? "drop-shadow-[0_0_25px_hsl(var(--cyan))] scale-110" : "group-hover:scale-110 group-hover:rotate-3"}`}>
-                    {STYLE_META[s].icon}
-                  </span>
-                  <div className="text-center">
-                    <span className={`block text-xs font-black uppercase tracking-[0.2em] mb-1 ${active && !locked ? "text-primary" : "text-foreground"}`}>
-                      {STYLE_META[s].label}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-widest hidden sm:block">{STYLE_META[s].description.split(' ')[0]} mode</span>
-                  </div>
-                  {locked && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[1.5rem] sm:rounded-[2rem] flex flex-col items-center justify-center gap-2">
-                      <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-white/50" />
-                      <span className="text-[8px] font-black text-white/50 uppercase tracking-widest">Pro Only</span>
-                    </div>
-                  )}
-                  {active && !locked && (
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 sm:w-12 h-1 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary))]" />
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex justify-center">
+            <div className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-2xl">
+              <span className="text-2xl">{STYLE_META.outline.icon}</span>
+              <div>
+                <p className="text-sm font-black uppercase tracking-wider">Outline</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">{STYLE_META.outline.description}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

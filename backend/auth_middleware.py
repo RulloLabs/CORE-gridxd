@@ -1,6 +1,7 @@
 """
 GridXD Backend — JWT Auth Middleware
-Validates Supabase JWT tokens (ES256 via JWKS, fallback HS256) to protect Cloud Run endpoints.
+Validates Supabase JWT tokens (ES256 via JWKS, fallback HS256).
+JWT is OPTIONAL — anonymous requests get IP-based rate limiting.
 """
 import os
 import time
@@ -62,11 +63,20 @@ async def verify_supabase_jwt(request: Request) -> str:
         raise InternalException(message="Server misconfigured: no JWT secret or Supabase URL")
 
     auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        raise UnauthorizedException(message="Authorization header missing or malformed. Expected: Bearer <token>")
-    token = auth_header.split(" ", 1)[1].strip()
+    token: Optional[str] = None
+
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+
     if not token:
-        raise UnauthorizedException(message="Empty token")
+        client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+        logger.info(f"Anonymous request from IP: {client_ip}")
+        is_allowed = await check_rate_limit(f"ip:{client_ip}")
+        if not is_allowed:
+            raise RateLimitException()
+        request.state.user_id = f"anon:{client_ip}"
+        request.state.user_role = "anonymous"
+        return request.state.user_id
 
     payload = None
 
@@ -99,10 +109,22 @@ async def verify_supabase_jwt(request: Request) -> str:
             )
         except JWTError as e:
             logger.warning(f"JWT validation failed (HS256 fallback): {e}")
-            raise UnauthorizedException(message="Invalid or expired token")
+            client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+            is_allowed = await check_rate_limit(f"ip:{client_ip}")
+            if not is_allowed:
+                raise RateLimitException()
+            request.state.user_id = f"anon:{client_ip}"
+            request.state.user_role = "anonymous"
+            return request.state.user_id
 
     if not payload:
-        raise UnauthorizedException(message="Invalid or expired token")
+        client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+        is_allowed = await check_rate_limit(f"ip:{client_ip}")
+        if not is_allowed:
+            raise RateLimitException()
+        request.state.user_id = f"anon:{client_ip}"
+        request.state.user_role = "anonymous"
+        return request.state.user_id
 
     user_id: Optional[str] = payload.get("sub")
     if not user_id:

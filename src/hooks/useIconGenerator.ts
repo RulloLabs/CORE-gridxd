@@ -153,7 +153,7 @@ export function useIconGenerator() {
     const safeName = projectName.trim() || "GridXD_System";
 
     try {
-      const exportStyles: SvgStyle[] = allStyles ? ["outline", "filled", "duotone"] : [style];
+      const exportStyles: SvgStyle[] = ["outline"];
 
       await downloadGeneratorPack(generatedIcons, visualStyle, {
         projectName: safeName,

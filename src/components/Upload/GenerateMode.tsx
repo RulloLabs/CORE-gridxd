@@ -77,22 +77,9 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
 
             <div className="space-y-3">
               <p className="text-[10px] text-secondary font-black uppercase tracking-[0.2em]">2. Estilo Base</p>
-              <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10">
-                {(["outline", "filled", "duotone"] as SvgStyle[]).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => generator.setActiveStyle(v)}
-                    title={`Estilo: ${STYLE_META[v].label}`}
-                    aria-pressed={generator.activeStyle === v ? "true" : "false"}
-                    className={`flex-1 py-3 text-xs rounded-xl font-black capitalize transition-all duration-300 ${
-                      generator.activeStyle === v
-                        ? "bg-secondary text-secondary-foreground shadow-xl shadow-secondary/30"
-                        : "text-muted-foreground hover:bg-white/10 hover:text-foreground"
-                    }`}
-                  >
-                    {v.slice(0, 3)}
-                  </button>
-                ))}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
+                <span className="text-lg">{STYLE_META.outline.icon}</span>
+                <span className="text-xs font-black uppercase tracking-wider">{STYLE_META.outline.label}</span>
               </div>
             </div>
           </div>
@@ -214,32 +201,11 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
             </div>
           )}
 
-          <div className="mb-8 sm:mb-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/5">
-            <span className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Variantes de Estilo:</span>
-            <div className="flex flex-wrap gap-3">
-              {(["outline", "filled", "duotone"] as SvgStyle[]).map((s) => {
-                const locked = !canAccessStyle(userPlan, s);
-                const active = generator.activeStyle === s;
-                return (
-                  <button
-                    key={s}
-                    onClick={() => locked ? onUpgrade(s) : generator.setActiveStyle(s)}
-                    title={locked ? "Requiere plan PRO" : STYLE_META[s].description}
-                    aria-pressed={active ? "true" : "false"}
-                    className={`group relative flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl sm:rounded-2xl border text-xs font-black transition-all duration-300 ${
-                      locked
-                        ? "border-white/5 text-muted-foreground opacity-40 cursor-not-allowed bg-transparent"
-                        : active
-                        ? "border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10"
-                        : "border-white/10 text-muted-foreground hover:border-white/20 hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="text-base" aria-hidden>{STYLE_META[s].icon}</span>
-                    {STYLE_META[s].label}
-                    {locked && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
-                  </button>
-                );
-              })}
+          <div className="mb-8 sm:mb-10 flex items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/5">
+            <span className="text-lg">{STYLE_META.outline.icon}</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider">Outline</p>
+              <p className="text-[10px] text-muted-foreground font-semibold">{STYLE_META.outline.description}</p>
             </div>
           </div>
 
@@ -260,7 +226,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                   <div className="relative w-full aspect-square glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center justify-center overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 active:scale-95"
                   >
                     <button
-                      onClick={() => isFree ? onUpgrade("outline") : setPreviewIcon(icon)}
+                      onClick={() => setPreviewIcon(icon)}
                       className="absolute inset-0 z-10"
                       aria-label={`Preview: ${icon.name}`}
                     />
@@ -278,7 +244,7 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                       )
                     )}
 
-                    <div className={`relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center z-10 pointer-events-none ${isFree ? "blur-[2px] opacity-40" : ""}`}>
+                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center z-10 pointer-events-none">
                       {previewSvg ? (
                         <div
                            className="w-full h-full transition-all duration-500 group-hover:scale-110 icon-glow-preview"
@@ -293,16 +259,9 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                       )}
                     </div>
 
-                    {isFree && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/10 backdrop-blur-[1px] pointer-events-none">
-                        <Lock className="w-5 h-5 text-amber-500/80 drop-shadow-md" />
-                      </div>
-                    )}
-
-                    {/* Individual download overlay on hover (only for non-free) */}
-                    {!isFree && icon.svgContent && (
+                    {icon.svgContent && (
                       <button
-                        onClick={() => downloadSingleIcon({ svgContent: icon.svgContent, name: icon.name }, generator.activeStyle, primaryColor)}
+                        onClick={(e) => { e.stopPropagation(); downloadSingleIcon({ svgContent: icon.svgContent, name: icon.name }, generator.activeStyle, primaryColor); }}
                         className="absolute bottom-2 right-2 w-7 h-7 rounded-lg bg-primary/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-primary shadow-lg z-20"
                         title="Descargar SVG"
                         aria-label={`Descargar ${icon.name}`}
@@ -330,47 +289,25 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
             <div className="relative z-10 text-center lg:text-left space-y-2 w-full">
               <h4 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">¿Listo para exportar?</h4>
               <p className="text-muted-foreground max-w-md font-medium text-xs sm:text-sm">
-                {isFree ? (
-                  <span>Para exportar tu sistema de iconos vectoriales generados por IA, necesitas una suscripción.</span>
-                ) : (
-                  <>Estás exportando el pack <span className="text-primary font-black uppercase tracking-widest">{generator.activeStyle}</span> optimizado para desarrollo.</>
-                )}
+                Estás exportando el pack <span className="text-primary font-black uppercase tracking-widest">outline</span> optimizado para desarrollo.
               </p>
-              {!isFree && (
-                <div className="pt-2">
-                  <input
-                    type="text"
-                    placeholder="Nombre del proyecto"
-                    value={projectName}
-                    onChange={(e) => setProjectName?.(e.target.value)}
-                    className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-foreground transition-all focus:bg-white/10 placeholder:opacity-30 w-full sm:w-auto"
-                  />
-                </div>
-              )}
+              <div className="pt-2">
+                <input
+                  type="text"
+                  placeholder="Nombre del proyecto"
+                  value={projectName}
+                  onChange={(e) => setProjectName?.(e.target.value)}
+                  className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-foreground transition-all focus:bg-white/10 placeholder:opacity-30 w-full sm:w-auto"
+                />
+              </div>
             </div>
 
             <div className="relative z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full lg:w-auto">
-              {!isFree && userPlan === "proplus" && (
-                <button
-                  onClick={() => generator.downloadPack(projectName, generator.activeStyle, true)}
-                  className="premium-button premium-button-outline text-center justify-center"
-                >
-                  Pack Maestro (ZIP)
-                </button>
-              )}
               <button
-                onClick={() => isFree ? onUpgrade("outline") : generator.downloadPack(projectName, generator.activeStyle)}
+                onClick={() => generator.downloadPack(projectName, "outline")}
                 className="premium-button premium-button-primary px-8 sm:px-12 group animate-shine text-center justify-center"
               >
-                {isFree ? (
-                  <>
-                    <Lock className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110" /> Desbloquear Descarga
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 group-hover:animate-bounce" /> Descargar Sistema
-                  </>
-                )}
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 group-hover:animate-bounce" /> Descargar Sistema
               </button>
             </div>
           </div>

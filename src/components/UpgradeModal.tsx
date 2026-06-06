@@ -14,7 +14,7 @@ interface UpgradeModalProps {
   blockedStyle?: SvgStyle;
 }
 
-const UpgradeModal = ({ open, onClose, blockedStyle = "filled" }: UpgradeModalProps) => {
+const UpgradeModal = ({ open, onClose, blockedStyle = "outline" }: UpgradeModalProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);

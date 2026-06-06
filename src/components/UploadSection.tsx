@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, Sparkles } from "lucide-react";
 import { useImageProcessor } from "@/hooks/useImageProcessor";
 import { useAuth } from "@/contexts/AuthContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import { SvgStyle } from "@/lib/svgStyle";
 import { ExtractMode } from "./Upload/ExtractMode";
-import { GenerateMode } from "./Upload/GenerateMode";
 import { downloadAssetsZip } from "@/lib/zip-utils";
 
 const UploadSection = () => {
   const processor = useImageProcessor();
   const { plan } = useAuth();
-  const [activeMode, setActiveMode] = useState<"extract" | "generate">("extract");
   const [exportStyle, setExportStyle] = useState<SvgStyle>("outline");
   const [upgradeStyle, setUpgradeStyle] = useState<SvgStyle | null>(null);
+
+  useEffect(() => {
+    if (processor.error?.includes("agotado")) {
+      setUpgradeStyle("outline");
+    }
+  }, [processor.error]);
 
   const handleDownloadZip = async () => {
     const { icons, options, visualStyle, zipUrl } = processor;
@@ -25,13 +29,11 @@ const UploadSection = () => {
 
     if (icons.length === 0) return;
     
-    // PRO+ exports all 3 styles, others export selected style only
-    const styles: SvgStyle[] = (plan === "proplus") ? ["outline", "filled", "duotone"] : [exportStyle];
     const name = options.projectName.trim() || "GridXD_Export";
 
     await downloadAssetsZip(icons, {
       projectName: name,
-      exportStyles: styles,
+      exportStyles: ["outline"],
       visualStyle,
       compress: true
     });
@@ -47,42 +49,14 @@ const UploadSection = () => {
           Extrae iconos listos para producción desde mockups o genera un pack completo desde cero basándote en tu logo.
         </p>
 
-        {/* MODO SELECTOR UI */}
+        {/* MODO SELECTOR UI — only Extract mode */}
         <div className="flex justify-center mb-10 sm:mb-16">
-          <div className="bg-foreground/5 p-2 rounded-[2rem] flex items-center gap-2 border border-border shadow-2xl backdrop-blur-xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            
-            <button
-              onClick={() => setActiveMode("extract") }
-              className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
-                activeMode === "extract" 
-                  ? "bg-foreground/10 text-foreground shadow-xl ring-1 ring-foreground/20" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-              }`}
-            >
-              <Upload className={`w-5 h-5 ${activeMode === "extract" ? "animate-bounce" : ""}`} />
-              <div className="text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Modo Manual</p>
-                <p className="text-sm font-bold">Extraer de Mockup</p>
-              </div>
-            </button>
-
-            <div className="w-px h-8 bg-border mx-1" />
-
-            <button
-              onClick={() => setActiveMode("generate")}
-              className={`relative z-10 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${
-                activeMode === "generate" 
-                  ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/20 glow-cyan ring-1 ring-primary/50" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-              }`}
-            >
-              <Sparkles className={`w-5 h-5 ${activeMode === "generate" ? "animate-pulse" : ""}`} />
-              <div className="text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Modo IA</p>
-                <p className="text-sm font-bold">Generar Sistema</p>
-              </div>
-            </button>
+          <div className="bg-foreground/5 p-2 rounded-[2rem] inline-flex items-center gap-3 px-6 py-4 border border-border shadow-2xl backdrop-blur-xl">
+            <Upload className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Extraer Iconos</p>
+              <p className="text-sm font-bold">Sube tu Mockup</p>
+            </div>
           </div>
         </div>
 
@@ -113,26 +87,18 @@ const UploadSection = () => {
           </div>
         )}
 
-        {activeMode === "extract" ? (
-          <ExtractMode 
-            processor={processor} 
-            exportStyle={exportStyle} 
-            setExportStyle={setExportStyle}
-            onUpgrade={(s) => setUpgradeStyle(s)}
-            onDownload={handleDownloadZip}
-          />
-        ) : (
-          <GenerateMode 
-            projectName={processor.options.projectName}
-            setProjectName={processor.options.setProjectName}
-            onUpgrade={(s) => setUpgradeStyle(s)}
-          />
-        )}
+        <ExtractMode 
+          processor={processor} 
+          exportStyle={exportStyle} 
+          setExportStyle={setExportStyle}
+          onUpgrade={(s) => setUpgradeStyle(s)}
+          onDownload={handleDownloadZip}
+        />
       </div>
 
       <UpgradeModal 
         open={!!upgradeStyle} 
-        onClose={() => setUpgradeStyle(null)} 
+        onClose={() => { setUpgradeStyle(null); processor.reset(); }} 
       />
     </section>
   );

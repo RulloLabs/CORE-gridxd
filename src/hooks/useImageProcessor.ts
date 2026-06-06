@@ -454,6 +454,14 @@ export function useImageProcessor() {
     });
   }, [upscale]);
 
+  const renameIcon = useCallback((id: number, newName: string) => {
+    setIcons((prev) =>
+      prev.map((icon) =>
+        icon.id === id ? { ...icon, name: newName } : icon
+      )
+    );
+  }, []);
+
   return {
     state,
     preview,
@@ -464,6 +472,7 @@ export function useImageProcessor() {
     processImages,
     reset,
     injectGeneratedIcon,
+    renameIcon,
     // Editor
     detectedRegions,
     confirmRegions,
