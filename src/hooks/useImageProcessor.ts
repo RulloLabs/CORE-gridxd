@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
+import ImageTracer from "imagetracerjs";
 import type { WorkerRegion } from "@/workers/regionDetector.worker";
 
 export type ProcessingState =
@@ -116,9 +117,6 @@ export async function extractIconsFromRegions(
   regions: Region[],
   options: ProcessingOptions
 ): Promise<ExtractedIcon[]> {
-  const ImageTracerModule = await import("imagetracerjs");
-  const ImageTracer = ImageTracerModule.default || ImageTracerModule;
-
   const canvas = document.createElement("canvas");
   canvas.width = imgEl.width;
   canvas.height = imgEl.height;
