@@ -27,9 +27,13 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user?.email) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+    const authResult = await supabaseAdmin.auth.getUser(token);
+    const user = authResult.data?.user;
+    if (authResult.error || !user?.email) {
+      return new Response(JSON.stringify({
+        error: "Not authenticated",
+        detail: authResult.error?.message ?? null,
+      }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

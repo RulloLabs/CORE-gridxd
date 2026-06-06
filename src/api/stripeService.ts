@@ -7,7 +7,7 @@ export const stripeService = {
         body: { priceId, returnUrl: window.location.origin },
       });
 
-      if (error) return { url: null, error: "El servicio de pagos no está disponible ahora. Intenta más tarde." };
+      if (error) return { url: null, error: `El servicio de pagos no está disponible: ${error.message}` };
       if (!data?.url) return { url: null, error: "No se recibió URL de checkout válida." };
 
       return { url: data.url, error: null };
