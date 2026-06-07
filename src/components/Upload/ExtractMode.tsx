@@ -23,6 +23,7 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
     state,
     preview,
     icons,
+    error: processorError,
     usedBackend,
     visualStyle,
     processImages,
@@ -312,6 +313,12 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
           </div>
         </div>
       </div>
+
+      {processorError && (
+        <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm font-semibold text-center">
+          {processorError}
+        </div>
+      )}
 
       <label
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
