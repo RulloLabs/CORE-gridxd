@@ -268,8 +268,18 @@ export function useImageProcessor() {
         setIcons(extracted);
         await incrementUsage();
       } catch (err) {
-        logger.error("Extraction error:", err);
-        setError("Error al extraer los iconos. Intenta de nuevo.");
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error("Extraction error: %s", msg);
+        // Check if it's an imagetracerjs loading issue
+        if (msg.includes("imagetracer") || msg.includes("getsvgstring")) {
+          setError("Error al procesar SVG: el motor de trazado no está disponible. Recarga la página e inténtalo de nuevo.");
+        } else if (msg.includes("canvas") || msg.includes("getContext")) {
+          setError("Error de renderizado: tu navegador no soporta Canvas 2D.");
+        } else if (msg.includes("getImageData") || msg.includes("taint")) {
+          setError("Error de seguridad: la imagen está protegida contra exportación (CORS).");
+        } else {
+          setError("Error al extraer los iconos. Intenta de nuevo.");
+        }
         setState("idle");
       }
     },
