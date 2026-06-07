@@ -117,35 +117,48 @@ export async function extractIconsFromRegions(
   regions: Region[],
   options: ProcessingOptions
 ): Promise<ExtractedIcon[]> {
-  const canvas = document.createElement("canvas");
-  canvas.width = imgEl.width;
-  canvas.height = imgEl.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(imgEl, 0, 0);
+  const width = imgEl.naturalWidth || imgEl.width;
+  const height = imgEl.naturalHeight || imgEl.height;
 
-  const width = canvas.width;
-  const height = canvas.height;
+  // Validate image dimensions
+  if (!width || !height) throw new Error("Invalid image dimensions");
+  if (width > 10000 || height > 10000) throw new Error("Image too large (>10000px)");
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable");
+  ctx.drawImage(imgEl, 0, 0);
 
   const today = new Date().toISOString().split("T")[0].replace(/-/g, "");
   const proj = options.projectName || "Project";
 
-  return regions.map((r, i) => {
+  const results: ExtractedIcon[] = [];
+
+  for (let i = 0; i < regions.length; i++) {
+    const r = regions[i];
     const padding = 15;
     const sx = Math.max(0, r.minX - padding);
     const sy = Math.max(0, r.minY - padding);
-    const sw = Math.min(width - sx, r.maxX - r.minX + padding * 2);
-    const sh = Math.min(height - sy, r.maxY - r.minY + padding * 2);
+    const sw = Math.min(width - sx, Math.max(1, r.maxX - r.minX + padding * 2));
+    const sh = Math.min(height - sy, Math.max(1, r.maxY - r.minY + padding * 2));
 
-    const outCanvas = document.createElement("canvas");
+    // Skip invalid regions
+    if (sw < 2 || sh < 2) continue;
+
     const resolution = options.upscale ? 2048 : 1024;
+    const outCanvas = document.createElement("canvas");
     outCanvas.width = resolution;
     outCanvas.height = resolution;
-    const outCtx = outCanvas.getContext("2d")!;
+    const outCtx = outCanvas.getContext("2d");
+    if (!outCtx) throw new Error("Canvas 2D context unavailable for output");
 
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = sw;
     tempCanvas.height = sh;
-    const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true })!;
+    const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+    if (!tempCtx) throw new Error("Canvas 2D context unavailable for temp");
     tempCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
 
     if (options.removeBackground) {
@@ -198,13 +211,15 @@ export async function extractIconsFromRegions(
       { ltres: 0.1, qtres: 1, pathomit: 8, colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5 }
     );
 
-    return {
+    results.push({
       id,
       dataUrl: outCanvas.toDataURL("image/png"),
       svgContent: svgString,
       name: `GRIDXD_${proj}_${paddedId}_${resLabel}_${today}.png`,
-    };
-  });
+    });
+  }
+
+  return results;
 }
 
 // ─── HOOK ─────────────────────────────────────────────────────────────────────
