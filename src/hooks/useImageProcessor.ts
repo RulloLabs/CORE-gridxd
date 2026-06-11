@@ -11,8 +11,9 @@ import {
 } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
-import ImageTracer from "imagetracerjs";
 import type { WorkerRegion } from "@/workers/regionDetector.worker";
+
+import ImageTracer from "imagetracerjs";
 
 export type ProcessingState =
   | "idle"
@@ -206,10 +207,25 @@ export async function extractIconsFromRegions(
     const paddedId = id.toString().padStart(2, "0");
     const resLabel = options.upscale ? "2K" : "HD";
 
-    const svgString = ImageTracer.getsvgstring(
-      tempCtx.getImageData(0, 0, sw, sh),
-      { ltres: 0.1, qtres: 1, pathomit: 8, colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5 }
-    );
+    let svgString = "";
+    try {
+      const imageData = tempCtx.getImageData(0, 0, sw, sh);
+      const tracer = (self as Record<string, unknown>).ImageTracer;
+      if (!tracer && typeof ImageTracer === "undefined") {
+        throw new Error("ImageTracer not found in imports or globals");
+      }
+      const instance = tracer || ImageTracer;
+      if (typeof instance.getsvgstring !== "function") {
+        throw new Error(`ImageTracer.getsvgstring is ${typeof instance.getsvgstring}, not a function`);
+      }
+      svgString = instance.getsvgstring(imageData, {
+        ltres: 0.1, qtres: 1, pathomit: 8,
+        colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5,
+      });
+    } catch (tracerErr) {
+      logger.error("Tracer error for region %d: %s", i, tracerErr instanceof Error ? tracerErr.message : String(tracerErr));
+      throw tracerErr;
+    }
 
     results.push({
       id,
@@ -285,15 +301,18 @@ export function useImageProcessor() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         logger.error("Extraction error: %s", msg);
-        // Check if it's an imagetracerjs loading issue
-        if (msg.includes("imagetracer") || msg.includes("getsvgstring")) {
-          setError("Error al procesar SVG: el motor de trazado no está disponible. Recarga la página e inténtalo de nuevo.");
+        // Handle all known error patterns
+        if (msg.includes("ImageTracer not found") || msg.includes("not a function") || msg.includes("getsvgstring") || msg.includes("undefined") || msg.includes("not defined")) {
+          setError("Error del motor SVG: " + msg);
         } else if (msg.includes("canvas") || msg.includes("getContext")) {
           setError("Error de renderizado: tu navegador no soporta Canvas 2D.");
         } else if (msg.includes("getImageData") || msg.includes("taint")) {
           setError("Error de seguridad: la imagen está protegida contra exportación (CORS).");
+        } else if (msg.includes("too large") || msg.includes("dimension")) {
+          setError("Imagen demasiado grande. Máximo 10000px por lado.");
         } else {
-          setError("Error al extraer los iconos. Intenta de nuevo.");
+          // Show actual error for any unhandled case to aid debugging
+          setError(msg);
         }
         setState("idle");
       }
