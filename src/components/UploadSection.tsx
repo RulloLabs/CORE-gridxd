@@ -1,23 +1,13 @@
-import { useState, useEffect } from "react";
-import { Upload, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Upload } from "lucide-react";
 import { useImageProcessor } from "@/hooks/useImageProcessor";
-import { useAuth } from "@/contexts/AuthContext";
-import UpgradeModal from "@/components/UpgradeModal";
 import { SvgStyle } from "@/lib/svgStyle";
 import { ExtractMode } from "./Upload/ExtractMode";
 import { downloadAssetsZip } from "@/lib/zip-utils";
 
 const UploadSection = () => {
   const processor = useImageProcessor();
-  const { plan } = useAuth();
   const [exportStyle, setExportStyle] = useState<SvgStyle>("outline");
-  const [upgradeStyle, setUpgradeStyle] = useState<SvgStyle | null>(null);
-
-  useEffect(() => {
-    if (processor.error?.includes("agotado")) {
-      setUpgradeStyle("outline");
-    }
-  }, [processor.error]);
 
   const handleDownloadZip = async () => {
     const { icons, options, visualStyle, zipUrl } = processor;
@@ -60,46 +50,14 @@ const UploadSection = () => {
           </div>
         </div>
 
-        {/* UPSELL NOTIFICATION — triggered from ExtractMode when free users reach backend quality */}
-        {processor.state === "done" && processor.icons.length > 0 && plan === "free" && (
-          <div className="mb-4 sm:mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-6 text-center animate-in fade-in slide-in-from-top-4">
-            <Sparkles className="w-6 sm:w-8 h-6 sm:h-8 text-primary mx-auto mb-2 sm:mb-3" />
-            <p className="text-foreground font-bold text-base sm:text-lg mb-1.5 sm:mb-2">
-              Has extraído {processor.icons.length} iconos listos.
-            </p>
-            <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
-              Mejora la precisión y descarga en HD con detección avanzada y eliminación de fondo real.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
-              <button
-                onClick={() => { window.location.hash = "#pricing"; }}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-bold hover:scale-105 transition-all glow-cyan"
-              >
-                Activar Pro — 9€/mes
-              </button>
-              <button
-                onClick={handleDownloadZip}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-border text-muted-foreground text-xs sm:text-sm font-semibold hover:bg-muted/30 transition-colors"
-              >
-                Descargar versión básica
-              </button>
-            </div>
-          </div>
-        )}
-
         <ExtractMode 
           processor={processor} 
           exportStyle={exportStyle} 
           setExportStyle={setExportStyle}
-          onUpgrade={(s) => setUpgradeStyle(s)}
+          onUpgrade={() => {}}
           onDownload={handleDownloadZip}
         />
       </div>
-
-      <UpgradeModal 
-        open={!!upgradeStyle} 
-        onClose={() => { setUpgradeStyle(null); processor.reset(); }} 
-      />
     </section>
   );
 };

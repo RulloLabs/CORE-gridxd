@@ -1,17 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
-/**
- * Service to handle Analytics tracking natively in Supabase
- */
 export const analyticsService = {
-  /**
-   * Tracks an event in the analytics_events table
-   */
   async trackEvent(eventName: string, metadata: Record<string, unknown> = {}) {
     try {
-      // Get current user if available to attach to the event
       const { data: { session } } = await supabase.auth.getSession();
-      
       const { error } = await supabase
         .from('analytics_events')
         .insert({
@@ -19,13 +12,11 @@ export const analyticsService = {
           user_id: session?.user?.id || null,
           metadata: metadata
         });
-
       if (error) {
-        console.error("Analytics tracking error:", error);
+        logger.error("Analytics tracking error:", error);
       }
     } catch (err) {
-      // Fail silently to avoid breaking UX for analytics errors
-      console.error("Failed to track event:", err);
+      logger.error("Failed to track event:", err);
     }
   }
 };

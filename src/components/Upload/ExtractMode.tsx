@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, X, Loader2, Download, Sparkles, Lock, Maximize2 } from "lucide-react";
+import { Upload, X, Loader2, Download, Sparkles, Maximize2 } from "lucide-react";
 import { SvgStyle, STYLE_META, canAccessStyle } from "@/lib/svgStyle";
 import { useAuth } from "@/contexts/AuthContext";
 import IconEditor from "@/components/IconEditor";
@@ -159,19 +159,9 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                           <img
                             src={icon.dataUrl}
                             alt={icon.name}
-                            className={`w-full h-full object-contain p-4 sm:p-5 transition-all pointer-events-none ${!usedBackend ? "blur-[4px] opacity-40 scale-95" : "group-hover:scale-110"}`}
+                            className="w-full h-full object-contain p-4 sm:p-5 transition-all group-hover:scale-110 pointer-events-none"
                           />
                         )}
-                        {!usedBackend && !icon.svgContent && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[3px] pointer-events-none">
-                            <span title="Activo Bloqueado (Requiere suscripción)">
-                              <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-primary drop-shadow-lg" />
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Individual download overlay on hover */}
-                        {icon.svgContent && (
                           <button
                             onClick={() => downloadSingleIcon(icon, exportStyle, primaryColor)}
                             className="absolute bottom-1 right-1 w-7 h-7 rounded-lg bg-primary/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-primary shadow-lg z-20"
@@ -180,7 +170,6 @@ export const ExtractMode = ({ processor, exportStyle, setExportStyle, onUpgrade,
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
-                        )}
                       </div>
                       {editingNameId === icon.id ? (
                         <input

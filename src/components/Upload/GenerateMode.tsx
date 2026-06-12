@@ -1,11 +1,10 @@
 import { useState, useRef } from "react";
-import { Upload, X, Loader2, Sparkles, Lock, AlertTriangle, Download } from "lucide-react";
+import { Upload, X, Loader2, Sparkles, AlertTriangle, Download } from "lucide-react";
 import { useIconGenerator, GeneratedIcon } from "@/hooks/useIconGenerator";
 import { StyleCard } from "@/components/StyleCard";
 import { IconPreviewModal } from "@/components/IconPreviewModal";
 import { SvgStyle, STYLE_META, canAccessStyle } from "@/lib/svgStyle";
 import { applyStyleToSvg } from "@/lib/svgStyle";
-import { useAuth } from "@/contexts/AuthContext";
 import { downloadSingleIcon } from "@/lib/zip-utils";
 
 interface GenerateModeProps {
@@ -15,7 +14,6 @@ interface GenerateModeProps {
 }
 
 export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: GenerateModeProps) => {
-  const { plan } = useAuth();
   const generator = useIconGenerator();
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,9 +27,6 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
     }
     generator.generateSystem(file, generator.activeStyle, generator.packSize);
   };
-
-  const userPlan = (plan as "free" | "pro" | "proplus") ?? "free";
-  const isFree = userPlan === "free";
 
   const primaryColor = generator.visualStyle?.color_primary || "#7c3aed";
 
@@ -178,29 +173,6 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
 
           <StyleCard style={generator.visualStyle} className="mb-8 sm:mb-12" />
 
-          {isFree && (
-            <div className="mb-8 sm:mb-12 rounded-[1.5rem] sm:rounded-[2rem] border border-amber-500/30 bg-amber-500/5 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="flex gap-4 items-start text-left max-w-xl relative z-10">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20 text-amber-500">
-                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-base sm:text-lg font-black text-foreground">Generador de IA Avanzado Bloqueado</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Estás viendo una previsualización de iconos de plantilla estándar. Para generar un sistema de iconos vectoriales únicos y personalizados adaptados geométricamente al ADN visual de tu marca utilizando <strong>Gemini SVG Architect</strong>, actualiza a PRO.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => onUpgrade("outline")}
-                className="w-full md:w-auto px-8 py-3 rounded-2xl bg-amber-500 text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-amber-500/20 shrink-0 relative z-10 font-bold"
-              >
-                Activar Plan PRO
-              </button>
-            </div>
-          )}
-
           <div className="mb-8 sm:mb-10 flex items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/5">
             <span className="text-lg">{STYLE_META.outline.icon}</span>
             <div>
@@ -232,16 +204,10 @@ export const GenerateMode = ({ onUpgrade, projectName, setProjectName }: Generat
                     />
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                    {isFree ? (
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-amber-500/20 text-[6px] font-black text-amber-500 rounded-full uppercase tracking-widest z-20 shadow-lg pointer-events-none">
-                        Plantilla
+                    {icon.svgContent && (
+                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-20 shadow-lg shadow-primary/20 pointer-events-none">
+                        AI
                       </div>
-                    ) : (
-                      icon.svgContent && (
-                        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-2 py-0.5 bg-primary text-[6px] font-black text-primary-foreground rounded-full uppercase tracking-widest z-20 shadow-lg shadow-primary/20 pointer-events-none">
-                          AI
-                        </div>
-                      )
                     )}
 
                     <div className="relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center z-10 pointer-events-none">

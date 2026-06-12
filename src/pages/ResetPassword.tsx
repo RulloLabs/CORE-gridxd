@@ -10,19 +10,12 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Escuchar el cambio en auth (el email link de supabase te loguea temporalmente)
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setMessage("Por favor, introduce tu nueva contraseña.");
       }
     });
-
-    // Validar si tenemos hash
-    if (!window.location.hash.includes("access_token")) {
-      // Si no venimos de un link correcto, podríamos no estar recuperando la contraseña
-      // Sin embargo, `supabase.auth.updateUser` solo funcionará si hay una sesión activa,
-      // la cual se establece cuando se llega desde el email.
-    }
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {

@@ -1,9 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import {
   incrementUsage,
-  getUserPlan,
-  getProcessingStrategy,
-  processImageBackend,
   extractStyleFromBackend,
   ProcessingOptions,
   VisualStyle,
@@ -116,7 +113,8 @@ async function detectRegionsViaWorker(
 export async function extractIconsFromRegions(
   imgEl: HTMLImageElement,
   regions: Region[],
-  options: ProcessingOptions
+  options: ProcessingOptions,
+  maxIcons: number = Infinity
 ): Promise<ExtractedIcon[]> {
   const width = imgEl.naturalWidth || imgEl.width;
   const height = imgEl.naturalHeight || imgEl.height;
@@ -136,8 +134,9 @@ export async function extractIconsFromRegions(
   const proj = options.projectName || "Project";
 
   const results: ExtractedIcon[] = [];
+  const regionsToProcess = maxIcons < Infinity ? regions.slice(0, maxIcons) : regions;
 
-  for (let i = 0; i < regions.length; i++) {
+  for (let i = 0; i < regionsToProcess.length; i++) {
     const r = regions[i];
     const padding = 15;
     const sx = Math.max(0, r.minX - padding);
@@ -289,10 +288,12 @@ export function useImageProcessor() {
         await delay(300);
         setState("generating");
 
+        const maxIcons = authPlan === "free" ? 3 : Infinity;
         const extracted = await extractIconsFromRegions(
           pendingImgEl,
           editedRegions,
-          pendingOptions
+          pendingOptions,
+          maxIcons
         );
 
         setState("done");
@@ -317,7 +318,7 @@ export function useImageProcessor() {
         setState("idle");
       }
     },
-    [pendingImgEl, pendingOptions]
+    [pendingImgEl, pendingOptions, authPlan]
   );
 
   const processClientSide = useCallback(
@@ -380,14 +381,6 @@ export function useImageProcessor() {
         const file = validFiles[0];
         const url = URL.createObjectURL(file);
         setPreview(url);
-        
-        const planInfo = await getUserPlan();
-
-        if (planInfo.plan === "free" && planInfo.remainingFreeUses <= 0) {
-          setError("Has agotado tus usos gratuitos de hoy.");
-          setState("idle");
-          return;
-        }
 
         const options: ProcessingOptions = {
           removeBackground,
@@ -395,37 +388,11 @@ export function useImageProcessor() {
           projectName: projectName || undefined,
         };
 
-        const strategy = getProcessingStrategy(planInfo);
-        if (strategy === "backend") {
-          try {
-            setState("uploading");
-            const result = await processImageBackend(file, options);
-            setUsedBackend(true);
-            setState("done");
-            setIcons(result.images.map((img, i) => ({
-              id: i + 1,
-              dataUrl: img.url,
-              svgContent: "",
-              name: img.name
-            })));
-            await incrementUsage();
-          } catch (err) {
-            await processClientSide(file, options);
-          }
-        } else {
-          await processClientSide(file, options);
-        }
+        await processClientSide(file, options);
         return;
       }
 
       // Batch Mode (Multiple Files)
-      const batchPlanInfo = await getUserPlan();
-      if (batchPlanInfo.plan === "free" && batchPlanInfo.remainingFreeUses <= 0) {
-        setError("Has agotado tus usos gratuitos de hoy.");
-        setState("idle");
-        return;
-      }
-
       setState("uploading");
       let allExtracted: ExtractedIcon[] = [];
       
@@ -438,7 +405,6 @@ export function useImageProcessor() {
         };
 
         try {
-          // In batch mode we skip the editor for now and use auto-detection
           const imgEl = await new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
             img.onload = () => resolve(img);
@@ -446,9 +412,9 @@ export function useImageProcessor() {
             img.src = URL.createObjectURL(file);
           });
 
-          // Use worker for batch too
           const regions = await detectRegionsViaWorker(imgEl);
-          const extracted = await extractIconsFromRegions(imgEl, regions, options);
+          const maxIcons = authPlan === "free" ? 3 : Infinity;
+          const extracted = await extractIconsFromRegions(imgEl, regions, options, maxIcons);
           
           allExtracted = [...allExtracted, ...extracted.map((icon, idx) => ({
             ...icon,
@@ -456,7 +422,7 @@ export function useImageProcessor() {
           }))];
           
           setIcons([...allExtracted]);
-          setPreview(URL.createObjectURL(file)); // Show current file as preview
+          setPreview(URL.createObjectURL(file));
         } catch (err) {
           logger.error(`Error processing batch file ${file.name}:`, err);
         }
@@ -465,7 +431,7 @@ export function useImageProcessor() {
       setState("done");
       await incrementUsage();
     },
-    [removeBackground, upscale, projectName, processClientSide]
+    [removeBackground, upscale, projectName, processClientSide, authPlan]
   );
 
   const reset = () => {
