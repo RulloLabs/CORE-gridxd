@@ -215,10 +215,10 @@ export async function extractIconsFromRegions(
         throw new Error("ImageTracer not found in imports or globals");
       }
       const instance = tracer || ImageTracer;
-      if (typeof instance.getsvgstring !== "function") {
-        throw new Error(`ImageTracer.getsvgstring is ${typeof instance.getsvgstring}, not a function`);
+      if (typeof instance.imagedataToSVG !== "function") {
+        throw new Error(`ImageTracer.imagedataToSVG is ${typeof instance.imagedataToSVG}, not a function`);
       }
-      svgString = instance.getsvgstring(imageData, {
+      svgString = instance.imagedataToSVG(imageData, {
         ltres: 0.1, qtres: 1, pathomit: 8,
         colorsampling: 1, numberofcolors: 2, mincolorratio: 0.5,
       });
